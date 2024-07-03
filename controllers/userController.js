@@ -9,12 +9,13 @@ const registerUser = asyncHandler(async (req, res) => {
     const {username, email, password} = req.body;
     if(!username || !email || !password){
         res.status(400);
+        console.log("hey")
         throw new Error("All fields are mandatory");
 
     }
     const userAvaiable = await User.findOne({ email });
     if (userAvaiable) {
-        res.status(400);
+        res.status(400);console.log("hey")
         throw new Error("User already registered");
     }
 
@@ -69,7 +70,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
 //@desc Current user info
-//@route POST /api/users
+//@route GET /api/users
 //@access private
 
 const currentUser = asyncHandler(async (req, res) => {
