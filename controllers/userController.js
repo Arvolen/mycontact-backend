@@ -41,32 +41,48 @@ const registerUser = asyncHandler(async (req, res) => {
 //@access public
 
 const loginUser = asyncHandler(async (req, res) => {
-    const {email, password} = req.body;
-    if(!email || !password){
+    const { email, password } = req.body;
+    console.log('Received login request:', { email, password });
+
+    if (!email || !password) {
         res.status(400);
+        console.error('Login failed: All fields are mandatory');
         throw new Error("All fields are mandatory");
     }
-    const user = await User.findOne({email});
-    if(user && (await bcrypt.compare(password, user.password))){
-        const accessToken = jwt.sign({
-            user: {
-                username: user.username,
-                email: user.email,
-                id: user.id,
-            }
-        }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: "15m"
-        }
-    );
-        res.status(200).json({accessToken});
-    }
-    else {
-        res.status(401);
-        throw new Error("Email or password not valid")
-    }
-  
-});
 
+    // Mock user data
+    const mockUser = {
+        username: "john_doe",
+        email: "john_doe@example.com",
+        id: "1",
+        password: "password123" // Mock password (for demonstration purposes only)
+    };
+
+    // Mock password check
+    if (email === mockUser.email && password === mockUser.password) {
+        console.log('Login successful for user:', mockUser);
+
+        const accessToken = jwt.sign(
+            {
+                user: {
+                    username: mockUser.username,
+                    email: mockUser.email,
+                    id: mockUser.id,
+                }
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        console.log('Generated access token:', accessToken);
+
+        res.status(200).json({ accessToken });
+    } else {
+        res.status(401);
+        console.error('Login failed: Email or password not valid');
+        throw new Error("Email or password not valid");
+    }
+});
 
 //@desc Current user info
 //@route POST /api/users
