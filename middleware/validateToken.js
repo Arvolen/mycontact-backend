@@ -10,7 +10,7 @@ const validateToken = asyncHandler(async(req,res,next ) => {
         {
             if (err) {
                 res.status(401);
-                throw new Error("User is not authenticated")
+                throw new Error("User is not authenticated!")
             }
             req.user = decoded.user;
             next();

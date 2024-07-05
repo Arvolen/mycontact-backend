@@ -1,14 +1,17 @@
 const express = require("express");
 const errorHandler = require("./middleware/errorHandler");
-const connectDb = require("./config/dbConnection");
+const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
 const cors = require("cors");
+
+const User = require('./models/userModel'); //for testing only
 
 const app = express();
 const port = process.env.PORT || 5001;
 
 const allowedOrigins = [
     'http://localhost:3000',
+    "http://localhost:5173",
     '*'
 ];
 
@@ -28,8 +31,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.get('/api/test', (req, res) => {
-    res.send('Test endpoint is working');
+app.get('/api/test', async(req, res) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
 });
 
 app.use('/api/contacts', require("./routes/contactRoutes"));
@@ -40,11 +48,11 @@ async function startServer() {
     try {
         // Wait for DB connection
         await connectDb();
+        await sequelize.sync();
 
-        // Start the server only after DB connection is successful
-        app.listen(port, () => {
-            console.log(`Server running on port ${port}`);
-        });
+    app.listen(port, () => {
+                    console.log(`Server running on port ${port}`);
+    })
     } catch (err) {
         console.error('Failed to connect to database:', err);
         process.exit(1); // Exit the process with a non-zero status code
