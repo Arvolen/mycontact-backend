@@ -1,6 +1,6 @@
 const express = require("express");
 const errorHandler = require("./middleware/errorHandler");
-const { connectDb, sequelize } = require("./config/dbConnection");
+// const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
 const cors = require("cors");
 
@@ -9,6 +9,7 @@ const User = require('./models/userModel'); //for testing only
 const app = express();
 const port = process.env.PORT || 5001;
 
+// 2 origin? this should be your frontend origin
 const allowedOrigins = [
     'http://localhost:3000',
     "http://localhost:5173",
@@ -47,8 +48,8 @@ app.use(errorHandler);
 async function startServer() {
     try {
         // Wait for DB connection
-        await connectDb();
-        await sequelize.sync();
+        // await connectDb();
+        // await sequelize.sync();
 
     app.listen(port, () => {
                     console.log(`Server running on port ${port}`);

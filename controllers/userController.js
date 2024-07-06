@@ -49,15 +49,21 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("All fields are mandatory");
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Mock user data
+    const mockUser = {
+        id: 1,
+        username: 'abcd1234',
+        email: 'abcd1234@example.com',
+        password: await bcrypt.hash('11111', 10), // Mock hashed password
+    };
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (email === mockUser.email && await bcrypt.compare(password, mockUser.password)) {
         const accessToken = jwt.sign(
             {
                 user: {
-                    username: user.username,
-                    email: user.email,
-                    id: user.id,
+                    username: mockUser.username,
+                    email: mockUser.email,
+                    id: mockUser.id,
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -65,18 +71,32 @@ const loginUser = asyncHandler(async (req, res) => {
                 expiresIn: "15m",
             }
         );
+        console.log("accessToken", accessToken);
         res.status(200).json({ accessToken });
     } else {
         res.status(401);
         throw new Error("Email or password not valid");
     }
+
+
 });
 
 //@desc Current user info
 //@route GET /api/users/current
 //@access private
 const currentUser = asyncHandler(async (req, res) => {
-    res.json(req.user);
+    const mockUser = {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com'
+    };
+
+    // Add headers to disable caching
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    res.json(mockUser);
 });
 
 module.exports = { registerUser, loginUser, currentUser };

@@ -5,8 +5,12 @@ const Contact = require("../models/contactModel"); // Adjust the path as necessa
 //@route GET /api/contacts
 //@access private
 const getContacts = asyncHandler(async (req, res) => {
-    const contacts = await Contact.findAll({ where: { user_id: req.user.id } });
-    res.status(200).json(contacts);
+    const mockContacts = [
+        { id: 1, name: 'John Doe', email: 'john@example.com', user_id: 1 },
+        { id: 2, name: 'Jane Doe', email: 'jane@example.com', user_id: 1 }
+    ];
+
+    res.status(200).json(mockContacts);
 });
 
 //@desc Create new contact
@@ -35,14 +39,19 @@ const createContact = asyncHandler(async (req, res) => {
 //@route GET /api/contacts/:id
 //@access private
 const getContact = asyncHandler(async (req, res) => {
-    const contact = await Contact.findByPk(req.params.id);
+    const mockContact = {
+        id: req.params.id,
+        name: 'John Doe',
+        email: 'john@example.com',
+        user_id: 1
+    };
 
-    if (!contact) {
+    if (mockContact.id) {
+        res.status(200).json(mockContact);
+    } else {
         res.status(404);
         throw new Error("Contact not found");
     }
-
-    res.status(200).json(contact);
 });
 
 //@desc Update contact
