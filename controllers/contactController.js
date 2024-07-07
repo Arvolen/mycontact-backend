@@ -5,7 +5,7 @@ const Contact = require("../models/contactModel"); // Adjust the path as necessa
 //@route GET /api/contacts
 //@access private
 const getContacts = asyncHandler(async (req, res) => {
-    const contacts = await Contact.findAll({ where: { user_id: req.user.id } });
+    const contacts = await Contact.findAll({ where: { user_id: req.user.id },  attributes: ['id', 'name', 'email', 'phone'] });
     res.status(200).json(contacts);
 });
 
