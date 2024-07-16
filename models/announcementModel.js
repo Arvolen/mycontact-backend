@@ -20,6 +20,32 @@ const Announcement = sequelize.define('Announcement', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
+  meta: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  avatarAlt: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'message',
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  avatarImg: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: '/images/avatars/5.png',
+  },
+  subtitle: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  rewards: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
 }, {
   timestamps: false
 });

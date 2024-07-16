@@ -14,8 +14,8 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 // @route POST /api/announcements
 // @access Public
 const createAnnouncement = asyncHandler(async (req, res) => {
-  const { message, active } = req.body;
-  const announcement = await Announcement.create({ message, active });
+  const { message, meta, title, subtitle, rewards } = req.body;
+  const announcement = await Announcement.create({ message, meta, title, subtitle, rewards });
   res.status(201).json(announcement);
 });
 
@@ -24,7 +24,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
 // @access Public
 const updateAnnouncement = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { message, active } = req.body;
+  const { message, active, meta, avatarAlt, title, avatarImg, subtitle, rewards } = req.body;
   const announcement = await Announcement.findByPk(id);
 
   if (!announcement) {
@@ -34,6 +34,12 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
 
   announcement.message = message;
   announcement.active = active;
+  announcement.meta = meta;
+  announcement.avatarAlt = avatarAlt;
+  announcement.title = title;
+  announcement.avatarImg = avatarImg;
+  announcement.subtitle = subtitle;
+  announcement.rewards = rewards;
   await announcement.save();
   res.json(announcement);
 });
