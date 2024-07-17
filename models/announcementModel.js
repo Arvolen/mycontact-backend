@@ -2,7 +2,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection'); 
 
-const Announcement = sequelize.define('Announcement', {
+const Announcements = sequelize.define('Announcement', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -22,8 +22,15 @@ const Announcement = sequelize.define('Announcement', {
   },
   meta: {
     type: DataTypes.STRING,
-    allowNull: true
-  },
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('meta');
+      if (rawValue) {
+        return rawValue;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      return today;
+    }},
   avatarAlt: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -46,8 +53,7 @@ const Announcement = sequelize.define('Announcement', {
     type: DataTypes.STRING,
     allowNull: true
   }
-}, {
-  timestamps: false
-});
+}
+);
 
-module.exports = Announcement;
+module.exports = Announcements;

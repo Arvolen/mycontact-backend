@@ -30,7 +30,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(announcementMiddleware);
+
 
 app.get('/api/test', async (req, res) => {
   try {
