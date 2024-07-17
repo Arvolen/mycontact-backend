@@ -53,8 +53,9 @@ const loginUser = asyncHandler(async (req, res) => {
     const mockUser = {
         id: 1,
         username: 'abcd1234',
-        email: 'abcd1234@example.com',
-        password: await bcrypt.hash('11111', 10), // Mock hashed password
+        email: 'aa@qq.com',
+        password: await bcrypt.hash('11111', 10),
+        role:'member'
     };
 
     if (email === mockUser.email && await bcrypt.compare(password, mockUser.password)) {
@@ -64,6 +65,7 @@ const loginUser = asyncHandler(async (req, res) => {
                     username: mockUser.username,
                     email: mockUser.email,
                     id: mockUser.id,
+                    role:'member'
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
