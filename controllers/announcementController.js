@@ -4,11 +4,67 @@ const Announcement = require('../models/announcementModel');
 const User = require('../models/userModel');
 const UserAnnouncementInteraction = require('../models/anounceAction');
 
+// Mock data for announcements
+const mockAnnouncements = [
+  {
+    id: 1,
+    message: "The system will be down for maintenance on Saturday from 1:00 AM to 3:00 AM.",
+    active: true,
+    created_at: new Date(),
+    meta: "2024-07-18",
+    avatarAlt: "maintenance",
+    title: "Maintenance Downtime",
+    avatarImg: "/images/avatars/maintenance.png",
+    subtitle: "System Maintenance",
+    rewards: "No rewards"
+  },
+  {
+    id: 2,
+    message: "We are excited to announce a new feature that allows you to customize your dashboard.",
+    active: true,
+    created_at: new Date(),
+    meta: "2024-07-10",
+    avatarAlt: "feature",
+    title: "New Feature Release",
+    avatarImg: "/images/avatars/feature.png",
+    subtitle: "Feature Update",
+    rewards: "Bonus Points"
+  }
+];
+
+const mockUserAnnouncements = [
+  {
+    id: 4,
+    message: "Dear user, you have a personalized offer waiting for you. Check it out now!",
+    active: true,
+    created_at: new Date(),
+    meta: "2024-07-15",
+    avatarAlt: "offer",
+    title: "Personalized Offer",
+    avatarImg: "/images/avatars/offer.png",
+    subtitle: "Special Offer",
+    rewards: "Discount Coupons"
+  },
+  {
+    id: 5,
+    message: "Your account has been updated with the latest security features.",
+    active: true,
+    created_at: new Date(),
+    meta: "2024-07-12",
+    avatarAlt: "account update",
+    title: "Account Update",
+    avatarImg: "/images/avatars/account_update.png",
+    subtitle: "Security Update",
+    rewards: "No rewards"
+  }
+];
+
 // @desc Get all active announcements
 // @route GET /api/announcements
 // @access Public
 const getAnnouncements = asyncHandler(async (req, res) => {
-  const announcements = await Announcement.findAll({ where: { active: true } });
+  // const announcements = await Announcement.findAll({ where: { active: true } });
+  const announcements = mockAnnouncements.filter(announcement => announcement.active);
   res.json(announcements);
 });
 
@@ -17,11 +73,13 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 // @access Private
 const getAnnouncementsForUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  const userAnnouncements = await UserAnnouncementInteraction.findAll({
-    where: { userId },
-    include: [Announcement]
-  });
-  const announcements = userAnnouncements.map(ua => ua.Announcement);
+  // const userAnnouncements = await UserAnnouncementInteraction.findAll({
+  //   where: { userId },
+  //   include: [Announcement]
+  // });
+  // const announcements = userAnnouncements.map(ua => ua.Announcement);
+
+  const announcements = mockUserAnnouncements.filter(announcement => announcement.active);
   res.json(announcements);
 });
 

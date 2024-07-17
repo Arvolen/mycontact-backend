@@ -89,8 +89,9 @@ const loginUser = asyncHandler(async (req, res) => {
 const currentUser = asyncHandler(async (req, res) => {
     const mockUser = {
         id: 1,
-        username: 'testuser',
-        email: 'test@example.com'
+        username: 'abcd1234',
+        email: 'aa@qq.com',
+                role:'member'
     };
 
     // Add headers to disable caching
