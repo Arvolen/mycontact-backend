@@ -4,6 +4,9 @@ const { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnounce
 const validateToken = require("../middleware/validateToken");
 const router = express.Router();
 
+
+// NOTE: // CRUD routes for announcements by admins, uses isAdminHandler.js middleware
+
 router.get('/', getAnnouncements);
 router.post('/', createAnnouncement);
 router.put('/:id', updateAnnouncement);
@@ -14,3 +17,5 @@ router.post('/claim-rewards', claimRewards);
 router.delete('/user/deleteNotification', deleteAnnouncementForUser);
 
 module.exports = router;
+
+

@@ -6,6 +6,8 @@ require("dotenv").config();
 const cors = require("cors");
 const announcementMiddleware = require("./middleware/announcementMiddleware");
 
+// NOTE: add adminRoute into app.use
+
 const app = express();
 const port = process.env.PORT || 5001;
 
