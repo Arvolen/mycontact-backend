@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 
 const validateToken = asyncHandler(async(req,res,next ) => {
     let token;
+    console.log("Validating token")
     let authHeader = req.headers.Authorization || req.headers.authorization;
     if(authHeader && authHeader.startsWith("Bearer")) {
         token = authHeader.split(" ")[1];
@@ -13,6 +14,8 @@ const validateToken = asyncHandler(async(req,res,next ) => {
                 throw new Error("User is not authenticated!")
             }
             req.user = decoded.user;
+            console.log("Validating token successful")
+            console.log(req.user)
             next();
         });
 

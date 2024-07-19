@@ -32,7 +32,7 @@ module.exports = { getAnnouncementsForUser };
 // @access Public
 const createAnnouncement = asyncHandler(async (req, res) => {
   const { message, title, subtitle, rewards } = req.body;
-
+  console.log("Creating a new announcment")
   // Create the new announcement
   const announcement = await Announcement.create({ message, title, subtitle, rewards });
 
@@ -49,7 +49,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
   }));
 
   await UserAnnouncementInteraction.bulkCreate(userAnnouncementInteractions);
-
+  console.log("Success")
   res.status(201).json(announcement);
 });
 
@@ -57,9 +57,12 @@ const createAnnouncement = asyncHandler(async (req, res) => {
 // @route PUT /api/announcements/:id
 // @access Public
 const updateAnnouncement = asyncHandler(async (req, res) => {
+  
   const { id } = req.params;
-  const { message, active, meta, avatarAlt, title, avatarImg, subtitle, rewards } = req.body;
+  const { message,  title,  subtitle, rewards } = req.body;
   const announcement = await Announcement.findByPk(id);
+
+console.log("Updating data!")
 
   if (!announcement) {
     res.status(404);
@@ -67,11 +70,7 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
   }
 
   announcement.message = message;
-  announcement.active = active;
-  announcement.meta = meta;
-  announcement.avatarAlt = avatarAlt;
   announcement.title = title;
-  announcement.avatarImg = avatarImg;
   announcement.subtitle = subtitle;
   announcement.rewards = rewards;
   await announcement.save();
@@ -82,15 +81,32 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
 // @route DELETE /api/announcements/:id
 // @access Public
 const deleteAnnouncement = asyncHandler(async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.params;
+  console.log("Trying to delete announcement with ID:", id);
+
+  // Find the announcement
   const announcement = await Announcement.findByPk(id);
+  console.log("Found announcement:", announcement);
 
   if (!announcement) {
     res.status(404);
     throw new Error('Announcement not found');
   }
 
+  // Find user interactions
+  const interactions = await UserAnnouncementInteraction.findAll({ where: { announcementId: id } });
+  console.log("Found interactions:", interactions);
+
+  if (interactions.length > 0) {
+    // Delete all interactions
+    await Promise.all(interactions.map(interaction => interaction.destroy()));
+    console.log("Deleted all interactions for the announcement");
+  }
+
+  // Delete the announcement
   await announcement.destroy();
+  console.log("Deleted announcement");
+
   res.status(204).end();
 });
 
