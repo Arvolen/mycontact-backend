@@ -47,6 +47,7 @@ app.use('/api/contacts', require("./routes/contactRoutes"));
 app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
+app.use('/api/avatars', require("./routes/avatarRoutes"));
 app.use(errorHandler);
 
 async function startServer() {

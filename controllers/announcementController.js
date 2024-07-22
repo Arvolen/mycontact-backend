@@ -25,7 +25,6 @@ const getAnnouncementsForUser = asyncHandler(async (req, res) => {
   res.json(announcements);
 });
 
-module.exports = { getAnnouncementsForUser };
 
 // @desc Create a new announcement
 // @route POST /api/announcements

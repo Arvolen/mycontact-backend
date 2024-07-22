@@ -54,6 +54,7 @@ const adminLogin = asyncHandler(async (req, res) => {
         const accessToken = jwt.sign(
             {
                 user: {
+                    name: admin.name,
                     username: admin.username,
                     email: admin.email,
                     id: admin.id,
@@ -101,6 +102,7 @@ const currentAdminStatus = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         id: admin.id,
+        name: admin.name,
         username: admin.username,
         email: admin.email,
         role: admin.role
