@@ -4,7 +4,9 @@ const errorHandler = require("./middleware/errorHandler");
 // const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
 const cors = require("cors");
-const announcementMiddleware = require("./middleware/announcementMiddleware");
+
+
+// NOTE: add adminRoute into app.use
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -44,6 +46,7 @@ app.get('/api/test', async (req, res) => {
 
 app.use('/api/contacts', require("./routes/contactRoutes"));
 app.use('/api/users', require("./routes/userRoutes"));
+app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use(errorHandler);
 
