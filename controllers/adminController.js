@@ -202,4 +202,9 @@ const getUser = asyncHandler(async (req, res) => {
 
 
 
-module.exports = { adminRegister, adminLogin, currentAdminStatus, getAllUsers, getUser };
+module.exports = { 
+    adminRegister, 
+    adminLogin, 
+    currentAdminStatus, 
+    getAllUsers, 
+    getUser };

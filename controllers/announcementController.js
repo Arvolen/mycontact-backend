@@ -158,6 +158,26 @@ const claimRewards = asyncHandler(async (req, res) => {
   }
 });
 
+
+// @desc Seen for an announcement
+// @route POST /api/announcements/:announcementId/claim-rewards
+// @access Private
+const announcementSeen = asyncHandler(async (req, res) => {
+  const { userId, announcementId } = req.body;
+  console.log("Seeing Notification")
+
+  const interaction = await UserAnnouncementInteraction.findOne({ where: { announcementId, userId } });
+  if (interaction) {
+    interaction.seen = true;
+    await interaction.save();
+    console.log("Announcment has been seen")
+    res.json(interaction);
+  } else {
+    res.status(404);
+    throw new Error('User interaction not found');
+  }
+});
+
 // @desc Delete an announcement for a user
 // @route DELETE /api/announcements/:announcementId/user
 // @access Private
@@ -174,6 +194,16 @@ const deleteAnnouncementForUser = asyncHandler(async (req, res) => {
     throw new Error('User interaction not found');
   }
 });
-
-module.exports = { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, getAnnouncementsForUser, likeAnnouncement, claimRewards, deleteAnnouncementForUser };
-
+module.exports = { 
+  // admin
+  getAnnouncements, 
+  createAnnouncement, 
+  updateAnnouncement, 
+  deleteAnnouncement,
+  getAnnouncementsForUser,
+  
+  //user
+   likeAnnouncement,
+   claimRewards, 
+  deleteAnnouncementForUser,
+  announcementSeen };

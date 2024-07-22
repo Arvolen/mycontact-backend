@@ -91,4 +91,8 @@ const currentUser = asyncHandler(async (req, res) => {
     console.log("current user")
 });
 
-module.exports = { registerUser, loginUser, currentUser };
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    currentUser 
+};
