@@ -27,11 +27,12 @@ const adminRegister = asyncHandler(async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role: "admin"
+        role: "admin",
+        level: 1
     });
 
     const token = jwt.sign(
-        { id: newAdmin.id, email: newAdmin.email, username: newAdmin.username, role: newAdmin.role },
+        { id: newAdmin.id, email: newAdmin.email, username: newAdmin.username, role: newAdmin.role, level: newAdmin.level },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: process.env.ACCESS_EXPIRATION }
     );
@@ -45,6 +46,7 @@ const adminRegister = asyncHandler(async (req, res) => {
 
 //@access public
 const adminLogin = asyncHandler(async (req, res) => {
+    console.log("trying")
     const { email, password } = req.body;
     if (!email || !password) {
         throw new CustomError("All fields are required", 400);
@@ -58,7 +60,8 @@ const adminLogin = asyncHandler(async (req, res) => {
                     username: admin.username,
                     email: admin.email,
                     id: admin.id,
-                    role: admin.role
+                    role: admin.role,
+                    level: admin.level
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -105,7 +108,8 @@ const currentAdminStatus = asyncHandler(async (req, res) => {
         name: admin.name,
         username: admin.username,
         email: admin.email,
-        role: admin.role
+        role: admin.role,
+        level: admin.level
     });
 });
 

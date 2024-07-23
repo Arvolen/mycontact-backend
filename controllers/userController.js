@@ -26,6 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
         username,
         email,
         password: hashedPassword,
+        level: 1
     });
 
     console.log('User created', user);
@@ -70,6 +71,7 @@ const loginUser = asyncHandler(async (req, res) => {
                     email: user.email,
                     id: user.id,
                     role: user.role,
+                    level: user.level
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -92,8 +94,67 @@ const currentUser = asyncHandler(async (req, res) => {
     console.log("current user")
 });
 
-module.exports = { 
-    registerUser, 
-    loginUser, 
-    currentUser 
+//@desc Update user level
+//@route PATCH /api/users/level
+//@access private
+const updateUserLevel = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+
+    if (user.level < 5) {
+        user.level += 1;
+        await user.save();
+        res.status(200).json({ level: user.level });
+    } else {
+        res.status(400);
+        throw new Error("User has already reached the maximum level");
+    }
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+    console.log("Updating")
+    const userId = req.user.id; // Assuming user ID is passed as a URL parameter
+    const { name, username, country, contact, accountStatus, email } = req.body;
+  
+    // Validate request body
+    if (!name && !username && !country && !contact && !accountStatus && !email) {
+      res.status(400);
+      throw new Error('No valid fields provided for update');
+    }
+    console.log(userId)
+    // Find user by ID
+    const user = await User.findByPk(userId);
+  
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  
+    // Update user fields
+    if (name) user.name = name;
+    if (username) user.username = username;
+    if (country) user.country = country;
+    if (contact) user.contact = contact;
+    if (accountStatus) user.accountStatus = accountStatus;
+    if (email) user.email = email;
+
+    // Save updated user
+    await user.save();
+  
+    res.status(200).json(user);
+  });
+
+  
+module.exports = {
+    registerUser,
+    loginUser,
+    currentUser,
+    updateUserLevel,
+    updateUser
 };

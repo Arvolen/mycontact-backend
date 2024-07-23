@@ -1,38 +1,64 @@
 const asyncHandler = require('express-async-handler');
 const Avatar = require('../models/avatarModel');
 const User = require('../models/userModel');
+const fs = require('fs');
 
 // @desc Create an avatar
 // @route POST /api/avatars
 // @access Private
 const createAvatar = asyncHandler(async (req, res) => {
   const { image, level } = req.body;
-  const userId = req.user.id;
 
-  if (!image || !level) {
+  if (!image || level === undefined) {
     res.status(400);
-    throw new Error('All fields are mandatory');
+    throw new Error('Image and level are mandatory');
   }
 
-  const avatar = await Avatar.create({
-    userId,
-    image,
+  const newAvatar = await Avatar.create({
+    image: Buffer.from(image, 'base64'), // Assume image data is sent in base64 encoding
     level
   });
 
-  res.status(201).json(avatar);
+  res.status(201).json(newAvatar);
+});
+
+
+// @desc Create an avatar
+// @route POST /api/avatars
+// @access Private
+const createAvatarFromPath = asyncHandler(async (req, res) => {
+  const { imagePath, level } = req.body;
+
+  if (!imagePath || level === undefined) {
+    res.status(400);
+    throw new Error('Image and level are mandatory');
+  }
+
+  try {
+    const imageBuffer = fs.readFileSync(imagePath);
+    const newAvatar = await Avatar.create({
+      image: imageBuffer,
+      level
+    });
+    console.log("Success")
+    res.status(201).json(newAvatar);
+  } catch (err) {
+    console.error('Error reading the image file:', err);
+    res.status(500).json({ message: 'Error reading the image file' });
+  }
 });
 
 // @desc Get user's avatar
 // @route GET /api/avatars
 // @access Private
 const getUserAvatar = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const level = req.user.level;
 
-  const avatar = await Avatar.findOne({ where: { userId } });
+  const avatar = await Avatar.findOne({ where: { level } });
 
   if (avatar) {
-    res.json(avatar);
+    const base64Image = avatar.image.toString('base64');
+    res.json({ image: base64Image });
   } else {
     res.status(404);
     throw new Error('Avatar not found');
@@ -62,6 +88,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 module.exports = {
   createAvatar,
+  createAvatarFromPath,
   getUserAvatar,
   updateUserAvatar
 };
