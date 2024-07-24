@@ -46,12 +46,13 @@ const adminRegister = asyncHandler(async (req, res) => {
 
 //@access public
 const adminLogin = asyncHandler(async (req, res) => {
-    console.log("trying")
+console.log("Logging in into admin")
     const { email, password } = req.body;
     if (!email || !password) {
         throw new CustomError("All fields are required", 400);
     }
     const admin = await User.findOne({ where: { email, role: "admin" } }); // Ensure user is an admin
+    console.log("User is admin")
     if (admin && (await bcrypt.compare(password, admin.password))) {
         const accessToken = jwt.sign(
             {
