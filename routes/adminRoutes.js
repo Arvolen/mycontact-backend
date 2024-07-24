@@ -8,10 +8,9 @@ const isAdminHandler = require("../middleware/isAdminHandler");
 // Registration and Login routes
 router.post('/register', adminRegister);
 router.post('/login',  adminLogin);
+
 // router.post('/refreshToken', refreshToken);
 router.use(validateToken, isAdminHandler);
-
-
 // post-login
 router.get('/current', currentAdminStatus);
 

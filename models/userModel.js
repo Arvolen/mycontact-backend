@@ -20,6 +20,24 @@ const User = sequelize.define('User', {
     values: ['member', 'admin'],
     defaultValue: 'member'
   },
+  level: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    allowNull: false
+  },
+  country: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  contact: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  accountStatus: {
+    type: DataTypes.ENUM,
+    values: ['pending', 'active', 'inactive'],
+    defaultValue: 'active'
+  },
   email: {
     type: DataTypes.STRING,
     allowNull: false

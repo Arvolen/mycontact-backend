@@ -26,22 +26,23 @@ const registerUser = asyncHandler(async (req, res) => {
         username,
         email,
         password: hashedPassword,
+        level: 1
     });
 
     console.log('User created', user);
 
     if (user) {
         const token = jwt.sign(
-        { user },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: process.env.ACCESS_EXPIRATION }
-    );
+            { user },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: process.env.ACCESS_EXPIRATION }
+        );
 
-    res.status(201).json({
-        _id: user.id,
-        email: user.email,
-        token: `Bearer ${token}`
-    });
+        res.status(201).json({
+            _id: user.id,
+            email: user.email,
+            token: `Bearer ${token}`
+        });
     } else {
         res.status(400);
         throw new Error("User data is not valid");
@@ -62,10 +63,12 @@ const loginUser = asyncHandler(async (req, res) => {
     // Mock user data
     const mockUser = {
         id: 1,
+        name: "abcd",
         username: 'abcd1234',
         email: 'aa@qq.com',
         password: await bcrypt.hash('11111', 10),
-        role:'member'
+        role: 'member',
+        level: 3,
     };
 
     if (email === mockUser.email && await bcrypt.compare(password, mockUser.password)) {
@@ -75,7 +78,7 @@ const loginUser = asyncHandler(async (req, res) => {
                     username: mockUser.username,
                     email: mockUser.email,
                     id: mockUser.id,
-                    role:'member'
+                    role: 'member'
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -101,7 +104,8 @@ const currentUser = asyncHandler(async (req, res) => {
         id: 1,
         username: 'abcd1234',
         email: 'aa@qq.com',
-                role:'member'
+        role: 'admin',
+        level: 3,
     };
 
     // Add headers to disable caching
@@ -112,8 +116,67 @@ const currentUser = asyncHandler(async (req, res) => {
     res.json(mockUser);
 });
 
-module.exports = { 
-    registerUser, 
-    loginUser, 
-    currentUser 
+//@desc Update user level
+//@route PATCH /api/users/level
+//@access private
+const updateUserLevel = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+
+    if (user.level < 5) {
+        user.level += 1;
+        await user.save();
+        res.status(200).json({ level: user.level });
+    } else {
+        res.status(400);
+        throw new Error("User has already reached the maximum level");
+    }
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+    console.log("Updating")
+    const userId = req.user.id; // Assuming user ID is passed as a URL parameter
+    const { name, username, country, contact, accountStatus, email } = req.body;
+
+    // Validate request body
+    if (!name && !username && !country && !contact && !accountStatus && !email) {
+        res.status(400);
+        throw new Error('No valid fields provided for update');
+    }
+    console.log(userId)
+    // Find user by ID
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (username) user.username = username;
+    if (country) user.country = country;
+    if (contact) user.contact = contact;
+    if (accountStatus) user.accountStatus = accountStatus;
+    if (email) user.email = email;
+
+    // Save updated user
+    await user.save();
+
+    res.status(200).json(user);
+});
+
+
+module.exports = {
+    registerUser,
+    loginUser,
+    currentUser,
+    updateUserLevel,
+    updateUser
 };
