@@ -7,21 +7,27 @@ const fs = require('fs');
 // @route POST /api/avatars
 // @access Private
 const createAvatar = asyncHandler(async (req, res) => {
-   console.log("Creating new avatar")
   const { image, level } = req.body;
- 
 
   if (!image || level === undefined) {
     res.status(400);
     throw new Error('Image and level are mandatory');
   }
+  
+  // Convert the Base64 string back to Buffer if needed
+  const imageBuffer = Buffer.from(image, 'base64');
 
-  const newAvatar = await Avatar.create({
-    image: image, // Assume image data is sent in base64 encoding
-    level
-  });
-
-  res.status(201).json(newAvatar);
+  try {
+    const newAvatar = await Avatar.create({
+      image: imageBuffer, // Store as Buffer
+      level
+    });
+    
+    res.status(201).json(newAvatar);
+  } catch (err) {
+    console.error('Error creating avatar:', err);
+    res.status(500).json({ message: 'Error creating avatar' });
+  }
 });
 
 
@@ -80,7 +86,8 @@ const getAllAvatar = asyncHandler(async (req, res) => {
           ...avatar.dataValues, // Spread the existing avatar properties
           image: avatar.image.toString('base64') // Convert image to Base64
         };
-      });
+      })
+      ;
       
       res.json({ data: avatarsWithBase64Images });
     } else {
