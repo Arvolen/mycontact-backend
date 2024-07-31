@@ -66,20 +66,12 @@ app.post('/api/upload-avatar', upload.single('image'), (req, res) => {
   }
 });
 
-app.get('/api/test', async (req, res) => {
-  try {
-    const users = await User.findAll();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.use('/api/contacts', require("./routes/contactRoutes"));
 app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
+app.use('/api/channels', require("./routes/chatRoutes"));
 app.use(errorHandler);
 
 async function startServer() {
