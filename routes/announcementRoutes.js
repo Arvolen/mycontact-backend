@@ -21,8 +21,9 @@ router.post('/', validateToken, isAdminHandler, createAnnouncement);
 router.put('/:id', validateToken, isAdminHandler, updateAnnouncement);
 router.delete('/:id', validateToken, isAdminHandler, deleteAnnouncement);
 
+router.use(validateToken)
 //Users in general
-router.get('/user/:userId', getAnnouncementsForUser);
+router.get('/user',validateToken, getAnnouncementsForUser);
 router.post('/like', likeAnnouncement);
 router.post('/claim-rewards', claimRewards);
 router.post('/seen', announcementSeen);

@@ -69,7 +69,7 @@ const getAnnouncements = asyncHandler(async (req, res) => {
 });
 
 // @desc Get announcements for a specific user
-// @route GET /api/announcements/user/:userId
+// @route GET /api/announcements/user
 // @access Private
 const getAnnouncementsForUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -88,10 +88,10 @@ const getAnnouncementsForUser = asyncHandler(async (req, res) => {
 // @route POST /api/announcements
 // @access Public
 const createAnnouncement = asyncHandler(async (req, res) => {
-  const { message, title, subtitle, rewards } = req.body;
+  const { content, title, subtitle, rewards } = req.body;
   console.log("Creating a new announcment")
   // Create the new announcement
-  const announcement = await Announcement.create({ message, title, subtitle, rewards });
+  const announcement = await Announcement.create({ content, title, subtitle, rewards });
 
   // Fetch all users
   const users = await User.findAll();
@@ -116,7 +116,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
 const updateAnnouncement = asyncHandler(async (req, res) => {
   
   const { id } = req.params;
-  const { message,  title,  subtitle, rewards } = req.body;
+  const { content,  title,  subtitle, rewards } = req.body;
   const announcement = await Announcement.findByPk(id);
 
 console.log("Updating data!")
@@ -126,11 +126,12 @@ console.log("Updating data!")
     throw new Error('Announcement not found');
   }
 
-  announcement.message = message;
+  announcement.content = content;
   announcement.title = title;
   announcement.subtitle = subtitle;
   announcement.rewards = rewards;
   await announcement.save();
+  console.log("Success")
   res.json(announcement);
 });
 
@@ -170,8 +171,9 @@ const deleteAnnouncement = asyncHandler(async (req, res) => {
 
 const likeAnnouncement = asyncHandler(async (req, res) => {
   try {
-    const { userId, announcementId } = req.body; // Assuming user ID is available from authentication middleware
-    
+    const { announcementId } = req.body;
+    const userId = req.user.id;
+
     console.log('Received request:', { userId, announcementId });
     
     if (!userId || !announcementId) {
@@ -186,7 +188,7 @@ const likeAnnouncement = asyncHandler(async (req, res) => {
 
       interaction.liked = true;
       await interaction.save();
-
+      console.log("Success")
       res.json(interaction);
     } else {
       res.status(404);
@@ -202,12 +204,14 @@ const likeAnnouncement = asyncHandler(async (req, res) => {
 // @route POST /api/announcements/:announcementId/claim-rewards
 // @access Private
 const claimRewards = asyncHandler(async (req, res) => {
-  const { userId, announcementId } = req.body;
+  const { announcementId } = req.body;
+  const userId = req.user.id;
 
   const interaction = await UserAnnouncementInteraction.findOne({ where: { announcementId, userId } });
   if (interaction) {
     interaction.rewardsClaimed = true;
     await interaction.save();
+    console.log("Success")
     res.json(interaction);
   } else {
     res.status(404);
@@ -220,7 +224,8 @@ const claimRewards = asyncHandler(async (req, res) => {
 // @route POST /api/announcements/:announcementId/claim-rewards
 // @access Private
 const announcementSeen = asyncHandler(async (req, res) => {
-  const { userId, announcementId } = req.body;
+  const { announcementId } = req.body;
+  const userId = req.user.id;
   console.log("Seeing Notification")
 
   const interaction = await UserAnnouncementInteraction.findOne({ where: { announcementId, userId } });

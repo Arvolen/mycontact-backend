@@ -4,9 +4,8 @@ const errorHandler = require("./middleware/errorHandler");
 // const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
 const cors = require("cors");
-
-
-// NOTE: add adminRoute into app.use
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -34,13 +33,37 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Directory to save uploaded files
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Appending extension
+  }
+});
 
-app.get('/api/test', async (req, res) => {
-  try {
-    const users = await User.findAll();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50 MB
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Error: File upload only supports the following filetypes - ' + filetypes));
+  }
+});
+
+// Endpoint to handle file upload
+app.post('/api/upload-avatar', upload.single('image'), (req, res) => {
+  if (req.file) {
+    res.status(200).send({ message: 'File uploaded successfully', file: req.file });
+  } else {
+    res.status(400).send({ message: 'File upload failed' });
   }
 });
 
@@ -49,6 +72,7 @@ app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
+app.use('/api/channels', require("./routes/chatRoutes"));
 app.use(errorHandler);
 
 async function startServer() {

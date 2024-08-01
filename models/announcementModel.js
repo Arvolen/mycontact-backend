@@ -8,7 +8,7 @@ const Announcements = sequelize.define('Announcement', {
     autoIncrement: true,
     primaryKey: true
   },
-  message: {
+  content: {
     type: DataTypes.STRING,
     allowNull: false
   },
