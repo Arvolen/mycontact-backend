@@ -9,7 +9,11 @@ const User = require('../models/userModel');
 // @route GET /api/channels
 // @access Public
 const getAllActiveChannel = asyncHandler(async (req, res) => {
-  const channels = await ChatChannel.findAll({ where: { active: true } });
+  // const channels = await ChatChannel.findAll({ where: { active: true } });
+  const channels = [
+    { id: 1, name: 'General', active: true },
+    { id: 2, name: 'Random', active: true }
+  ];
   res.json(channels);
 });
 
@@ -18,8 +22,12 @@ const getAllActiveChannel = asyncHandler(async (req, res) => {
 // @access Public
 const getChannelData = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
-  const channel = await ChatChannel.findByPk(channelId);
-
+  // const channel = await ChatChannel.findByPk(channelId);
+  const channels = [
+    { id: 1, name: 'General', active: true },
+    { id: 2, name: 'Random', active: true }
+  ];
+  const channel = channels.find(channel => channel.id === parseInt(channelId));
   if (!channel) {
     res.status(404);
     throw new Error('Channel not found');
