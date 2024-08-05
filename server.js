@@ -71,7 +71,9 @@ app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
-app.use('/api/channels', require("./routes/chatRoutes"));
+app.use('/api/channels', require("./routes/channelsRoutes"));
+app.use('/api/chats', require("./routes/chatRoutes"));
+app.use('/api/userChats', require("./routes/userChatRoutes"));
 app.use(errorHandler);
 
 async function startServer() {

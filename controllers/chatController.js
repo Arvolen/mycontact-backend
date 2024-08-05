@@ -1,179 +1,216 @@
-// chatController.js
-
 const asyncHandler = require('express-async-handler');
-const ChatChannel = require('../models/chatChannel');
-const ChatHistory = require('../models/chatHistory');
+const { Chat, ChatMessage, ChatParticipant} = require('../models/chatModel');
 const User = require('../models/userModel');
+const Contact = require('../models/contactModel');
 
-// @desc Get all active channels
-// @route GET /api/channels
-// @access Public
-const getAllActiveChannel = asyncHandler(async (req, res) => {
-  const channels = await ChatChannel.findAll({ where: { active: true } });
-  res.json(channels);
+// @desc Get all chats for a user
+// @access Private
+const getAllChats = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const userChats = await ChatParticipant.findAll({ 
+    where: { userId, active: true }, 
+    include: [{ 
+      model: Chat, 
+      include: [{ model: ChatMessage, as: 'messages' }]
+    }]
+  });
+  res.json(userChats);
 });
 
-// @desc Get details of a specific channel
-// @route GET /api/channels/:channelId
-// @access Public
-const getChannelData = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  const channel = await ChatChannel.findByPk(channelId);
+// @desc Get a specific chat by ID
+// @access Private
+const getChatById = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const chat = await Chat.findByPk(chatId, { include: [{ model: ChatMessage, as: 'messages' }] });
 
-  if (!channel) {
+  if (!chat) {
     res.status(404);
-    throw new Error('Channel not found');
+    throw new Error('Chat not found');
   }
 
-  res.json(channel);
+  res.json(chat);
 });
 
-// @desc Send a message
-// @route POST /api/channels/:channelId/messages
+// @desc Send a message in a chat
 // @access Private
 const sendMessage = asyncHandler(async (req, res) => {
-  console.log("connected")
-  const { channelId } = req.params;
-  console.log("channel iD ",channelId)
+  const { chatId } = req.params;
   const { message } = req.body;
-  const userId = req.user.id
+  const senderId = req.user.id;
 
-  const newMessage = await ChatHistory.create({ channelId, userId, message });
+  const newMessage = await ChatMessage.create({ chatId, message, senderId });
   res.status(201).json(newMessage);
 });
 
-// @desc Join a channel
-// @route POST /api/channels/:channelId/join
-// @access Private
-const joinChannel = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  const { userId } = req.body;
-
-  res.json({ message: 'User joined channel' });
-});
-
-// @desc Leave a channel
-// @route POST /api/channels/:channelId/leave
-// @access Private
-const leaveChannel = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  const { userId } = req.body;
-
-
-  res.json({ message: 'User left channel' });
-});
-
-// @desc Get messages from a channel
-// @route GET /api/channels/:channelId/messages
+// @desc Get messages from a chat
 // @access Private
 const getMessages = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  const messages = await ChatHistory.findAll({ where: { channelId } });
+  const { chatId } = req.params;
+  const messages = await ChatMessage.findAll({ where: { chatId } });
   res.json(messages);
 });
 
 // @desc Edit a message
-// @route PUT /api/channels/:channelId/messages/:messageId
 // @access Private
 const editMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const { message } = req.body;
 
-  const updatedMessage = await ChatHistory.update({ message }, { where: { id: messageId } });
+  const [updated] = await ChatMessage.update({ message }, { where: { id: messageId } });
+  if (!updated) {
+    res.status(404);
+    throw new Error('Message not found');
+  }
+
+  const updatedMessage = await ChatMessage.findByPk(messageId);
   res.json(updatedMessage);
 });
 
 // @desc Delete a message
-// @route DELETE /api/channels/:channelId/messages/:messageId
 // @access Private
 const deleteMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
 
-  await ChatHistory.destroy({ where: { id: messageId } });
+  const deleted = await ChatMessage.destroy({ where: { id: messageId } });
+  if (!deleted) {
+    res.status(404);
+    throw new Error('Message not found');
+  }
+
   res.status(204).end();
 });
 
-// @desc Admin: Get all channels
-// @route GET /api/channels
-// @access Admin
-const getAllChannel = asyncHandler(async (req, res) => {
-  const channels = await ChatChannel.findAll();
-  res.json(channels);
+// @desc Get all users in a chat
+// @access Private
+const getAllUsersInChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const usersInChat = await ChatParticipant.findAll({ 
+    where: { chatId }, 
+    include: [{ model: User, attributes: ['id', 'name', 'email'] }] 
+  });
+  res.json(usersInChat);
 });
 
-// @desc Admin: Create a new channel
-// @route POST /api/channels
+// @desc Admin: Create a new chat
 // @access Admin
-const createChannel = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-  const newChannel = await ChatChannel.create({ name, description });
-  res.status(201).json(newChannel);
+const createChat = asyncHandler(async (req, res) => {
+  const { userId, unseenMsgs, lastMessage } = req.body;
+  const newChat = await Chat.create({ userId, unseenMsgs, lastMessage });
+  res.status(201).json(newChat);
 });
 
-// @desc Admin: Update channel details
-// @route PUT /api/channels
+// @desc Admin: Update chat details
 // @access Admin
-const updateChannelDetail = asyncHandler(async (req, res) => {
-  const { id, name, description, active } = req.body;
+const updateChatDetail = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const { unseenMsgs, lastMessage } = req.body;
 
-  const channel = await ChatChannel.findByPk(id);
+  const chat = await Chat.findByPk(chatId);
 
-    console.log("Updating channel")
-
-  if (!channel) {
+  if (!chat) {
     res.status(404);
-    throw new Error('Channel not found');
+    throw new Error('Chat not found');
   }
 
-  channel.name = name;
-  channel.description = description;
-  channel.active = active;
-  await channel.save();
+  chat.unseenMsgs = unseenMsgs;
+  chat.lastMessage = lastMessage;
+  await chat.save();
 
-  res.json(channel);
+  res.json(chat);
 });
 
-// @desc Admin: Delete a channel
-// @route DELETE /api/channels/:channelId
+// @desc Admin: Delete a chat
 // @access Admin
-const deleteChannel = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
+const deleteChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
 
-  const channel = await ChatChannel.findByPk(channelId);
-  if (!channel) {
+  const chat = await Chat.findByPk(chatId);
+  if (!chat) {
     res.status(404);
-    throw new Error('Channel not found');
+    throw new Error('Chat not found');
   }
 
-  await channel.destroy();
+  await chat.destroy();
   res.status(204).end();
 });
 
-// @desc Admin: Get all users in a channel
-// @route GET /api/channels/:channelId/users
-// @access Admin
-const getAllUsersInChannel = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  // Logic to get all users in the channel
-  const users = []; // Replace with actual logic
-  res.json(users);
+const getAllChatsDetailed = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  console.log("Fetching user chats...");
+
+  const userChats = await ChatParticipant.findAll({ 
+    where: { userId, active: true }, 
+    include: [{
+      model: Chat,
+      include: [{ model: ChatMessage, as: 'messages' }]
+    }]
+  });
+
+  console.log('User Chats:', JSON.stringify(userChats, null, 2));
+
+  const contacts = await Contact.findAll({ 
+    where: { user_id: userId },  
+    attributes: ['id', 'name', 'email', 'phone'] 
+  });
+
+  const formattedContacts = contacts.map(contact => ({
+    id: contact.id,
+    role: "Admin",
+    about: "Normal Person",
+    fullName: contact.name,
+    status: "online"
+  }));
+
+  console.log('Contacts:', formattedContacts);
+
+  const chatsContacts = userChats.map(userChat => {
+    const chat = userChat.Chat;
+    return {
+      id: userChat.id,
+      role: userChat.role,
+      about: userChat.about,
+      chat: {
+        id: chat.id,
+        userId: chat.userId,
+        messages: chat.messages.map(message => ({
+          message: message.message,
+          senderId: message.senderId,
+          time: message.time
+        })),
+        unseenMsgs: chat.unseenMsgs,
+        lastMessage: chat.lastMessage ? {
+          message: chat.lastMessage.message,
+          senderId: chat.lastMessage.senderId,
+          time: chat.lastMessage.time
+        } : null
+      },
+      avatar: userChat.avatar,
+      fullName: userChat.fullName,
+      status: userChat.status,
+      avatarColor: userChat.avatarColor
+    };
+  });
+
+  const payload = {
+    chatsContacts,
+    contacts: formattedContacts
+  };
+
+  res.json(payload);
 });
+
 
 module.exports = {
-  // User routes
-  getAllActiveChannel,
-  getChannelData,
+  getAllChats,
+  getChatById,
   sendMessage,
-  joinChannel,
-  leaveChannel,
   getMessages,
   editMessage,
   deleteMessage,
-  
-  // Admin routes
-  getAllChannel,
-  createChannel,
-  updateChannelDetail,
-  deleteChannel,
-  getAllUsersInChannel,
+  getAllUsersInChat,
+  createChat,
+  updateChatDetail,
+  deleteChat,
+  getAllChatsDetailed
 };

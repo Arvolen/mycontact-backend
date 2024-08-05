@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel"); // Adjust the path as necessary
+const { findConfigFile } = require("typescript");
 
 //@desc Register a user
 //@route POST /api/users
@@ -150,11 +151,21 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(200).json(user);
   });
 
-  
+  const getUserProfile = asyncHandler(async (req,res) =>{
+    const{userId} = req.body
+    const response = await User.findByPk(userId)
+
+    res.json(response);
+
+
+  })
+
+
 module.exports = {
     registerUser,
     loginUser,
     currentUser,
     updateUserLevel,
+    getUserProfile,
     updateUser
 };
