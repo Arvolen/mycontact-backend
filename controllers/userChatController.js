@@ -37,6 +37,46 @@ const createUserChat = asyncHandler(async (req, res) => {
   res.status(201).json(newUserChat);
 });
 
+// @desc To create a channel that could be accessed by all users
+// @access Private
+const createChatForAllUser = asyncHandler(async (req, res) => {
+  const { role, about, chatId, avatar, fullName, status, avatarColor } = req.body;
+
+  // Validate chat existence
+  const chat = await Chat.findByPk(chatId);
+
+  if (!chat) {
+    res.status(404);
+    throw new Error('Chat not found');
+  }
+
+  // Fetch all users
+  const users = await User.findAll();
+
+  if (!users || users.length === 0) {
+    res.status(404);
+    throw new Error('No users found');
+  }
+
+  // Create ChatParticipant records for each user
+  const chatParticipants = await Promise.all(users.map(async (user) => {
+    return await ChatParticipant.create({
+      role,
+      about,
+      chatId,
+      userId: user.id,
+      avatar,
+      fullName,
+      status,
+      avatarColor,
+      active: true // Ensure the active field is set to true
+    });
+  }));
+
+  res.status(201).json(chatParticipants);
+});
+
+
 // @desc Get all ChatParticipants
 // @access Private
 const getAllUserChats = asyncHandler(async (req, res) => {
@@ -108,6 +148,7 @@ const deleteUserChat = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  createChatForAllUser,
   createUserChat,
   getAllUserChats,
   getUserChatById,

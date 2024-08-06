@@ -7,14 +7,65 @@ const Contact = require('../models/contactModel');
 // @access Private
 const getAllChats = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const userChats = await ChatParticipant.findAll({ 
-    where: { userId, active: true }, 
-    include: [{ 
-      model: Chat, 
-      include: [{ model: ChatMessage, as: 'messages' }]
-    }]
+
+  // Find all chat participants for the user
+  const chatsContacts = await ChatParticipant.findAll({
+    where: { userId, active: true },
+    include: [{
+      model: Chat,
+      include: [{ model: ChatMessage, as: 'messages' }],
+    }],
   });
-  res.json(userChats);
+
+  // Find all contacts for the user
+  const contacts = await Contact.findAll({
+    where: { user_id: userId },
+    attributes: ['id', 'name', 'email', 'phone'],
+  });
+
+  // Format contacts for response
+  const formattedContacts = contacts.map(contact => ({
+    id: contact.id,
+    role: "Admin",
+    about: "Normal Person",
+    fullName: contact.name,
+    status: "online",
+  }));
+
+  // Map chats to include last message data
+  const formattedChatsContacts = chatsContacts.map(chatContact => {
+    const chat = chatContact.Chat;
+    const lastMessage = chat.messages[chat.messages.length - 1] || null; // Get the last message
+
+    return {
+      id: chatContact.id,
+      chatId: chat.id,
+      userId: chatContact.userId,
+      role: chatContact.role,
+      about: chatContact.about,
+      avatar: chatContact.avatar,
+      fullName: chatContact.fullName,
+      status: chatContact.status,
+      avatarColor: chatContact.avatarColor,
+      active: chatContact.active,
+      Chat: {
+        id: chat.id,
+        userId: chat.userId,
+        unseenMsgs: chat.unseenMsgs,
+        lastMessage, // Include full last message data
+        messages: chat.messages,
+      },
+    };
+  });
+
+  // Create payload for response
+  const payload = {
+    chatsContacts: formattedChatsContacts,
+    contacts: formattedContacts,
+  };
+
+  // Send response
+  res.json(payload);
 });
 
 // @desc Get a specific chat by ID
@@ -38,9 +89,25 @@ const sendMessage = asyncHandler(async (req, res) => {
   const { message } = req.body;
   const senderId = req.user.id;
 
+  // Create a new message
   const newMessage = await ChatMessage.create({ chatId, message, senderId });
+
+  // Update the lastMessageId in the Chat model
+  await updateLastMessage(chatId, newMessage.id);
+
   res.status(201).json(newMessage);
 });
+
+// @desc manually update last message
+// @access Private
+const updateLastMessage = async (chatId, messageId) => {
+  const chat = await Chat.findByPk(chatId);
+  if (chat) {
+    chat.lastMessageId = messageId;
+    await chat.save();
+  }
+};
+
 
 // @desc Get messages from a chat
 // @access Private
@@ -134,36 +201,25 @@ const deleteChat = asyncHandler(async (req, res) => {
   res.status(204).end();
 });
 
+
+
+
+// @desc get all chat detailed including the contacts
+// @access Admin
 const getAllChatsDetailed = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-
-  console.log("Fetching user chats...");
-
   const userChats = await ChatParticipant.findAll({ 
     where: { userId, active: true }, 
-    include: [{
-      model: Chat,
-      include: [{ model: ChatMessage, as: 'messages' }]
+    include: [{ 
+      model: Chat, 
+      include: [
+        { model: ChatMessage, as: 'messages' },
+        { model: ChatMessage, as: 'lastMessage', where: { id: Chat.lastMessageId }, required: false },
+      ],
     }]
   });
 
-  console.log('User Chats:', JSON.stringify(userChats, null, 2));
-
-  const contacts = await Contact.findAll({ 
-    where: { user_id: userId },  
-    attributes: ['id', 'name', 'email', 'phone'] 
-  });
-
-  const formattedContacts = contacts.map(contact => ({
-    id: contact.id,
-    role: "Admin",
-    about: "Normal Person",
-    fullName: contact.name,
-    status: "online"
-  }));
-
-  console.log('Contacts:', formattedContacts);
-
+  // Process userChats to include the last message
   const chatsContacts = userChats.map(userChat => {
     const chat = userChat.Chat;
     return {
@@ -192,6 +248,19 @@ const getAllChatsDetailed = asyncHandler(async (req, res) => {
     };
   });
 
+  const contacts = await Contact.findAll({ 
+    where: { user_id: userId },  
+    attributes: ['id', 'name', 'email', 'phone'] 
+  });
+
+  const formattedContacts = contacts.map(contact => ({
+    id: contact.id,
+    role: "Admin",
+    about: "Normal Person",
+    fullName: contact.name,
+    status: "online"
+  }));
+
   const payload = {
     chatsContacts,
     contacts: formattedContacts
@@ -201,10 +270,12 @@ const getAllChatsDetailed = asyncHandler(async (req, res) => {
 });
 
 
+
 module.exports = {
   getAllChats,
   getChatById,
   sendMessage,
+  updateLastMessage,
   getMessages,
   editMessage,
   deleteMessage,

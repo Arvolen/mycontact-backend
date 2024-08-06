@@ -8,6 +8,7 @@ const {
   getMessages,
   editMessage,
   deleteMessage,
+  updateLastMessage,
   getAllUsersInChat,
   createChat,
   updateChatDetail,
@@ -32,6 +33,7 @@ router.use(isAdminHandler);
 
 router.post('/', createChat);
 router.put('/:chatId', updateChatDetail);
+router.put('/updateLastMsg', updateLastMessage)
 router.delete('/:chatId', deleteChat);
 router.get('/:chatId/users', getAllUsersInChat);
 
