@@ -48,12 +48,12 @@ const getAllChats = asyncHandler(async (req, res) => {
       status: chatContact.status,
       avatarColor: chatContact.avatarColor,
       active: chatContact.active,
-      Chat: {
+      chat: {
         id: chat.id,
         userId: chat.userId,
         unseenMsgs: chat.unseenMsgs,
         lastMessage, // Include full last message data
-        messages: chat.messages,
+        chat: chat.messages,
       },
     };
   });
@@ -72,14 +72,45 @@ const getAllChats = asyncHandler(async (req, res) => {
 // @access Private
 const getChatById = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const chat = await Chat.findByPk(chatId, { include: [{ model: ChatMessage, as: 'messages' }] });
+  const userId = req.user.id;
+  console.log("Getting chat by id")
+  // Fetch the chat with its messages
+  const chat = await Chat.findByPk(chatId, {
+    include: [{ model: ChatMessage, as: 'messages' }]
+  });
 
   if (!chat) {
     res.status(404);
     throw new Error('Chat not found');
   }
 
-  res.json(chat);
+  // Find the last message based on the ID
+  const lastMessage = chat.messages.find(message => message.id === chat.lastMessageId);
+
+  const chatsContacts = await ChatParticipant.findOne({
+    where: { chatId, userId, active: true },
+    include: [{
+      model: Chat,
+      include: [{ model: ChatMessage, as: 'messages' }],
+    }],
+  });
+  
+  const formattedChat = {
+    id: chat.id,
+    userId: chat.userId,
+    unseenMsgs: chat.unseenMsgs,
+    lastMessage, // Include full last message data
+    chat: chat.messages,
+  };
+
+
+  const payload = {
+    chat: formattedChat,
+    contact: chatsContacts,
+  };
+  
+  console.log("Success")
+  res.json(payload);
 });
 
 // @desc Send a message in a chat
