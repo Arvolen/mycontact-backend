@@ -3,6 +3,8 @@ const { Chat, ChatMessage, ChatParticipant} = require('../models/chatModel');
 const User = require('../models/userModel');
 const Contact = require('../models/contactModel');
 
+
+
 // @desc Get all chats for a user
 // @access Private
 const getAllChats = asyncHandler(async (req, res) => {
@@ -116,15 +118,55 @@ const getChatById = asyncHandler(async (req, res) => {
 // @desc Send a message in a chat
 // @access Private
 const sendMessage = asyncHandler(async (req, res) => {
-  const { chatId } = req.params;
-  const { message } = req.body;
+  try {
+    console.log("Chat data:", req.body.data.obj);
+    const { chatId, message } = req.body.data.obj;
+    const senderId = req.user.id;
+
+    console.log("Message Data:", chatId, message, senderId);
+
+    // Create a new message
+    const newMessage = await ChatMessage.create({ chatId, message, senderId });
+
+    console.log("Message Added");
+
+    // Update the lastMessageId in the Chat model
+    await updateLastMessage(chatId, newMessage.id);
+    console.log("updateLastMessage Added");
+
+    // Emit the new message event
+    const io = req.app.get('io');
+    io.emit('newMessage', { chatId, message: newMessage });
+
+    console.log("Connection Updated Added");
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "An error occurred while sending the message" });
+  }
+});
+
+const sendMessageManual = asyncHandler(async (req, res) => {
+  console.log("Chat data:",req.body)
+  const { message, chatId } = req.body;
+
   const senderId = req.user.id;
+
+  console.log("Message Data:" , chatId, message, senderId  )
 
   // Create a new message
   const newMessage = await ChatMessage.create({ chatId, message, senderId });
 
+  console.log("Message Added")
+
   // Update the lastMessageId in the Chat model
   await updateLastMessage(chatId, newMessage.id);
+
+  const io = req.app.get('io');
+  io.emit('newMessage', { chatId, message: newMessage });
+
+  console.log("Connection Updated Added");
 
   res.status(201).json(newMessage);
 });
@@ -306,6 +348,7 @@ module.exports = {
   getAllChats,
   getChatById,
   sendMessage,
+  sendMessageManual,
   updateLastMessage,
   getMessages,
   editMessage,

@@ -12,6 +12,7 @@ const {
   getAllUsersInChat,
   createChat,
   updateChatDetail,
+  sendMessageManual,
   deleteChat,
   getAllChatsDetailed
 } = require('../controllers/chatController');
@@ -22,7 +23,8 @@ router.use(validateToken);
 // User Routes
 router.get('/', getAllChats);
 router.get('/:chatId', getChatById);
-router.post('/:chatId/messages', sendMessage);
+router.post('/messages', sendMessage);
+router.post('/messages/manual', sendMessageManual);
 router.get('/:chatId/messages', getMessages);
 router.put('/:chatId/messages/:messageId', editMessage);
 router.delete('/:chatId/messages/:messageId', deleteMessage);
