@@ -3,7 +3,44 @@ const { Chat, ChatMessage, ChatParticipant} = require('../models/chatModel');
 const User = require('../models/userModel');
 const Contact = require('../models/contactModel');
 
+// @desc Admin: Create a new channel or chat
+// @access Admin
+const createChat = asyncHandler(async (req, res) => {
+  const { fullName, unseenMsgs, lastMessage, chatType, about } = req.body;
+  const newChat = await Chat.create({ name: fullName, unseenMsgs, lastMessage });
+  const chatId = newChat.id
+  const userId = req.user.id
+  console.log(newChat)
+  if(chatType == 'channel'){
+    const newChannel = await ChatParticipant.create({
+      role: chatType,
+      about: about,
+      chatId: chatId,
+      userId: userId,
+      fullName: fullName,
+      active: true ,
+      chatType: chatType
+    });
 
+  res.status(201).json(newChannel);
+
+  }
+  if(chatType == 'chat'){
+    const newChannelChat = await ChatParticipant.create({
+      role: chatType,
+      about,
+      chatId,
+      userId: userId,
+      avatar,
+      fullName: fullName,
+      avatarColor,
+      active: true ,
+      chatType: chatType
+    });
+
+  res.status(201).json(newChannelChat);
+}
+});
 
 // @desc Get all chats for a user
 // @access Private
@@ -12,7 +49,7 @@ const getAllChats = asyncHandler(async (req, res) => {
 
   // Find all chat participants for the user
   const chatsContacts = await ChatParticipant.findAll({
-    where: { userId, active: true },
+    where: { chatType: "channel", active: true },
     include: [{
       model: Chat,
       include: [{ model: ChatMessage, as: 'messages' }],
@@ -35,9 +72,9 @@ const getAllChats = asyncHandler(async (req, res) => {
   }));
 
   // Map chats to include last message data
-  const formattedChatsContacts = chatsContacts.map(chatContact => {
+  const formattedChatsContacts = await Promise.all(chatsContacts.map(async chatContact => {
     const chat = chatContact.Chat;
-    const lastMessage = chat.messages[chat.messages.length - 1] || null; // Get the last message
+    const lastMessage = await ChatMessage.findByPk(chat.lastMessageId);
 
     return {
       id: chatContact.id,
@@ -52,13 +89,12 @@ const getAllChats = asyncHandler(async (req, res) => {
       active: chatContact.active,
       chat: {
         id: chat.id,
-        userId: chat.userId,
         unseenMsgs: chat.unseenMsgs,
-        lastMessage, // Include full last message data
+        lastMessage: lastMessage, // Include full last message data
         chat: chat.messages,
       },
     };
-  });
+  }));
 
   // Create payload for response
   const payload = {
@@ -69,15 +105,31 @@ const getAllChats = asyncHandler(async (req, res) => {
   // Send response
   res.json(payload);
 });
+  
 
 // @desc Get a specific chat by ID
 // @access Private
 const getChatById = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
+  console.log("chatId: ", chatId)
   const userId = req.user.id;
   console.log("Getting chat by id")
+
+
+
+  const chatsContacts = await ChatParticipant.findOne({
+    where: { id: chatId },
+    include: [{
+      model: Chat,
+      include: [{ model: ChatMessage, as: 'messages' }],
+    }],
+  });
+  console.log(chatsContacts)
+  const id= chatsContacts.chatId
+
+  
   // Fetch the chat with its messages
-  const chat = await Chat.findByPk(chatId, {
+  const chat = await Chat.findByPk(id, {
     include: [{ model: ChatMessage, as: 'messages' }]
   });
 
@@ -88,18 +140,9 @@ const getChatById = asyncHandler(async (req, res) => {
 
   // Find the last message based on the ID
   const lastMessage = chat.messages.find(message => message.id === chat.lastMessageId);
-
-  const chatsContacts = await ChatParticipant.findOne({
-    where: { chatId, userId, active: true },
-    include: [{
-      model: Chat,
-      include: [{ model: ChatMessage, as: 'messages' }],
-    }],
-  });
   
   const formattedChat = {
     id: chat.id,
-    userId: chat.userId,
     unseenMsgs: chat.unseenMsgs,
     lastMessage, // Include full last message data
     chat: chat.messages,
@@ -134,9 +177,18 @@ const sendMessage = asyncHandler(async (req, res) => {
     await updateLastMessage(chatId, newMessage.id);
     console.log("updateLastMessage Added");
 
+    const chatsContacts = await ChatParticipant.findOne({
+      where: { chatId: chatId },
+      include: [{
+        model: Chat,
+        include: [{ model: ChatMessage, as: 'messages' }],
+      }],
+    });
+    const id= chatsContacts.id
+
     // Emit the new message event
     const io = req.app.get('io');
-    io.emit('newMessage', { chatId, message: newMessage });
+    io.emit('newMessage', { id, message: newMessage });
 
     console.log("Connection Updated Added");
 
@@ -163,8 +215,18 @@ const sendMessageManual = asyncHandler(async (req, res) => {
   // Update the lastMessageId in the Chat model
   await updateLastMessage(chatId, newMessage.id);
 
+  const chatsContacts = await ChatParticipant.findOne({
+    where: { chatId: chatId },
+    include: [{
+      model: Chat,
+      include: [{ model: ChatMessage, as: 'messages' }],
+    }],
+  });
+  const id= chatsContacts.id
+
+
   const io = req.app.get('io');
-  io.emit('newMessage', { chatId, message: newMessage });
+  io.emit('newMessage', { id, message: newMessage });
 
   console.log("Connection Updated Added");
 
@@ -231,32 +293,36 @@ const getAllUsersInChat = asyncHandler(async (req, res) => {
   res.json(usersInChat);
 });
 
-// @desc Admin: Create a new chat
-// @access Admin
-const createChat = asyncHandler(async (req, res) => {
-  const { userId, unseenMsgs, lastMessage } = req.body;
-  const newChat = await Chat.create({ userId, unseenMsgs, lastMessage });
-  res.status(201).json(newChat);
+// @desc Get all ChatParticipants
+// @access Private
+const getAllUserChats = asyncHandler(async (req, res) => {
+  console.log("getting all user chat")
+  const userChats = await ChatParticipant.findAll({
+    include: [
+      { model: User, attributes: ['id', 'name', 'email'] }, // Include related User information
+      { model: Chat, attributes: ['id', 'unseenMsgs', 'lastMessageId'] } // Include related Chat information
+    ]
+  });
+  res.json(userChats);
 });
 
 // @desc Admin: Update chat details
 // @access Admin
 const updateChatDetail = asyncHandler(async (req, res) => {
-  const { chatId } = req.params;
-  const { unseenMsgs, lastMessage } = req.body;
+  const { chatId, fullName, active, about } = req.body;
 
-  const chat = await Chat.findByPk(chatId);
+  const chatParticipant = await ChatParticipant.findOne({
+    where: { chatId },
+  });
 
-  if (!chat) {
-    res.status(404);
-    throw new Error('Chat not found');
-  }
+  const updatedChatParticipant = await chatParticipant.update({
+    fullName,
+    active,
+    about,
+  });
 
-  chat.unseenMsgs = unseenMsgs;
-  chat.lastMessage = lastMessage;
-  await chat.save();
+  res.status(201).json(updatedChatParticipant);
 
-  res.json(chat);
 });
 
 // @desc Admin: Delete a chat
@@ -357,5 +423,6 @@ module.exports = {
   createChat,
   updateChatDetail,
   deleteChat,
-  getAllChatsDetailed
+  getAllChatsDetailed,
+  getAllUserChats
 };

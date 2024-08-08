@@ -32,13 +32,10 @@ const Chat = sequelize.define('Chat', {
     autoIncrement: true,
     primaryKey: true,
   },
-  userId: {
-    type: DataTypes.INTEGER,
+  name:{
+    type: DataTypes.STRING,
     allowNull: false,
-    references: {
-      model: User,
-      key: 'id',
-    },
+
   },
   unseenMsgs: {
     type: DataTypes.INTEGER,
@@ -107,6 +104,11 @@ const ChatParticipant = sequelize.define('ChatParticipant', {
 
     type: DataTypes.BOOLEAN,
     allowNull: false
+  },
+  ChatType:{
+    type: DataTypes.ENUM,
+    values: ['channel', 'chat'],
+    defaultValue: 'channel'
   }
 }, {
   timestamps: false,
@@ -116,7 +118,6 @@ const ChatParticipant = sequelize.define('ChatParticipant', {
 Chat.hasMany(ChatMessage, { foreignKey: 'chatId', as: 'messages' });
 ChatMessage.belongsTo(Chat, { foreignKey: 'chatId' });
 
-Chat.belongsTo(User, { foreignKey: 'userId' });
 ChatParticipant.belongsTo(Chat, { foreignKey: 'chatId' });
 ChatParticipant.belongsTo(User, { foreignKey: 'userId' });
 

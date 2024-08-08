@@ -14,7 +14,8 @@ const {
   updateChatDetail,
   sendMessageManual,
   deleteChat,
-  getAllChatsDetailed
+  getAllChatsDetailed,
+  getAllUserChats
 } = require('../controllers/chatController');
 
 const router = express.Router();
@@ -33,8 +34,9 @@ router.get('/detailed', getAllChatsDetailed);
 // Admin Routes
 router.use(isAdminHandler);
 
+router.get('/userChat', getAllUserChats);
 router.post('/', createChat);
-router.put('/:chatId', updateChatDetail);
+router.put('/', updateChatDetail);
 router.put('/updateLastMsg', updateLastMessage)
 router.delete('/:chatId', deleteChat);
 router.get('/:chatId/users', getAllUsersInChat);
