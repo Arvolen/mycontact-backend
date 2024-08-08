@@ -85,7 +85,6 @@ app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
 app.use('/api/chats', require("./routes/chatRoutes"));
-app.use('/api/userChats', require("./routes/userChatRoutes"));
 app.use(errorHandler);
 
 io.on('connection', (socket) => {

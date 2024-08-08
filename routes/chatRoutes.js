@@ -34,7 +34,7 @@ router.get('/detailed', getAllChatsDetailed);
 // Admin Routes
 router.use(isAdminHandler);
 
-router.get('/userChat', getAllUserChats);
+router.get('/allChannel/get', getAllUserChats);
 router.post('/', createChat);
 router.put('/', updateChatDetail);
 router.put('/updateLastMsg', updateLastMessage)
