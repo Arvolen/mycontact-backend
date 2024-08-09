@@ -14,7 +14,6 @@ const {
   updateChatDetail,
   sendMessageManual,
   deleteChat,
-  getAllChatsDetailed,
   getAllUserChats,
   getUserNameById
 } = require('../controllers/chatController');
@@ -31,7 +30,6 @@ router.post('/messages/manual', sendMessageManual);
 router.get('/:chatId/messages', getMessages);
 router.put('/:chatId/messages/:messageId', editMessage);
 router.delete('/:chatId/messages/:messageId', deleteMessage);
-router.get('/detailed', getAllChatsDetailed);
 
 // Admin Routes
 router.use(isAdminHandler);
