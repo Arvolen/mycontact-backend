@@ -17,6 +17,10 @@ const ChatMessage = sequelize.define('ChatMessage', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  senderName:{
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   time: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

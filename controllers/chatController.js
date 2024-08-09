@@ -165,11 +165,13 @@ const sendMessage = asyncHandler(async (req, res) => {
     console.log("Chat data:", req.body.data.obj);
     const { chatId, message } = req.body.data.obj;
     const senderId = req.user.id;
+    const senderName = req.user.username
 
-    console.log("Message Data:", chatId, message, senderId);
+    console.log("Message Data:", chatId, message, senderId, senderName);
+
 
     // Create a new message
-    const newMessage = await ChatMessage.create({ chatId, message, senderId });
+    const newMessage = await ChatMessage.create({ chatId, message, senderId, senderName });
 
     console.log("Message Added");
 
@@ -200,15 +202,16 @@ const sendMessage = asyncHandler(async (req, res) => {
 });
 
 const sendMessageManual = asyncHandler(async (req, res) => {
-  console.log("Chat data:",req.body)
   const { message, chatId } = req.body;
 
   const senderId = req.user.id;
+  const senderName = req.user.username;
 
-  console.log("Message Data:" , chatId, message, senderId  )
+  console.log("Message Data:" , chatId, message, senderId, senderName  )
 
   // Create a new message
-  const newMessage = await ChatMessage.create({ chatId, message, senderId });
+  const newMessage = await ChatMessage.create({ chatId, message, senderId, senderName });
+
 
   console.log("Message Added")
 
@@ -409,6 +412,19 @@ const getAllChatsDetailed = asyncHandler(async (req, res) => {
 });
 
 
+const getUserNameById = asyncHandler(async (req, res) => {
+  const userId = req.params
+
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+  }
+
+  res.status(200).json(user);
+});
+
 
 module.exports = {
   getAllChats,
@@ -424,5 +440,6 @@ module.exports = {
   updateChatDetail,
   deleteChat,
   getAllChatsDetailed,
-  getAllUserChats
+  getAllUserChats,
+  getUserNameById
 };

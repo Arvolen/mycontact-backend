@@ -167,5 +167,6 @@ module.exports = {
     currentUser,
     updateUserLevel,
     getUserProfile,
-    updateUser
+    updateUser,
+    
 };

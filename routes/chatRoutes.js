@@ -15,7 +15,8 @@ const {
   sendMessageManual,
   deleteChat,
   getAllChatsDetailed,
-  getAllUserChats
+  getAllUserChats,
+  getUserNameById
 } = require('../controllers/chatController');
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.use(validateToken);
 
 // User Routes
 router.get('/', getAllChats);
+router.get('/senderId/names/:userId')
 router.get('/:chatId', getChatById);
 router.post('/messages', sendMessage);
 router.post('/messages/manual', sendMessageManual);
