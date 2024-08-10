@@ -1,43 +1,44 @@
-
 const express = require('express');
 const validateToken = require('../middleware/validateToken');
 const isAdminHandler = require('../middleware/isAdminHandler');
-const {    
-    getAllActiveChannel,
-    getChannelData,
-    sendMessage,
-    joinChannel,
-    leaveChannel,
-    getMessages,
-    editMessage,
-    deleteMessage,
-    getAllChannel,
-    createChannel,
-    updateChannelDetail,
-    deleteChannel,
-    getAllUsersInChannel,   
-} = require('../controllers/chatController')
+const {
+  getAllChats,
+  getChatById,
+  sendMessage,
+  getMessages,
+  editMessage,
+  deleteMessage,
+  updateLastMessage,
+  getAllUsersInChat,
+  createChat,
+  updateChatDetail,
+  sendMessageManual,
+  deleteChat,
+  getAllUserChats,
+  getUserNameById
+} = require('../controllers/chatController');
 
 const router = express.Router();
 router.use(validateToken);
 
 // User Routes
-router.get('/channel', getAllActiveChannel);
-router.get('/:channelId', getChannelData);
-router.post('/:channelId/post', sendMessage);
-// router.post('/channel/join/:channelId', joinChannel);
-// router.post('/channel/leave/:channelId', leaveChannel);
-router.get('/:channelId/messages', getMessages);
-router.put('/:channelId/message/:messageId', editMessage);
-router.delete('/:channelId/message/:messageId', deleteMessage);
+router.get('/', getAllChats);
+router.get('/senderId/names/:userId')
+router.get('/:chatId', getChatById);
+router.post('/messages', sendMessage);
+router.post('/messages/manual', sendMessageManual);
+router.get('/:chatId/messages', getMessages);
+router.put('/:chatId/messages/:messageId', editMessage);
+router.delete('/:chatId/messages/:messageId', deleteMessage);
 
 // Admin Routes
 router.use(isAdminHandler);
 
-router.get('/', getAllChannel);
-router.post('/', createChannel);
-router.put('/', updateChannelDetail);
-router.delete('/:channelId', deleteChannel);
-router.get('/:channelId/users', getAllUsersInChannel);
+router.get('/allChannel/get', getAllUserChats);
+router.post('/', createChat);
+router.put('/', updateChatDetail);
+router.put('/updateLastMsg', updateLastMessage)
+router.delete('/:chatId', deleteChat);
+router.get('/:chatId/users', getAllUsersInChat);
 
 module.exports = router;

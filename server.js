@@ -1,5 +1,8 @@
 // server.js
+
 const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
 const errorHandler = require("./middleware/errorHandler");
 // const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
@@ -10,7 +13,16 @@ const path = require("path");
 const app = express();
 const port = process.env.PORT || 5001;
 
-// 2 origin? this should be your frontend origin
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+app.set('io', io);
+
 const allowedOrigins = [
   'http://localhost:3000',
   "http://localhost:5173",
@@ -72,8 +84,16 @@ app.use('/api/users', require("./routes/userRoutes"));
 app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
-app.use('/api/channels', require("./routes/chatRoutes"));
+app.use('/api/chats', require("./routes/chatRoutes"));
 app.use(errorHandler);
+
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
 
 async function startServer() {
     try {
@@ -81,7 +101,7 @@ async function startServer() {
         // await connectDb();
         // await sequelize.sync();
 
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
   } catch (err) {
