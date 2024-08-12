@@ -1,6 +1,14 @@
 const asyncHandler = require('express-async-handler');
-const {sanitizeMessage}  = require('../services/chatService')
-const { checkAndCountViolations } = require('../services/chatViolation');
+const {
+  sanitizeInput,
+  sanitizeForDisplay,
+  checkAndCountViolations,
+  enforceMessageTimer,
+  enforceMessageLength,
+  updateLastMessage,
+  fetchMessagesInBatches
+} = require('../services/chatService');
+const { ChatViolation } = require('../models/chatRecord');
 const { Chat, ChatMessage, ChatParticipant} = require('../models/chatModel');
 const User = require('../models/userModel');
 const Contact = require('../models/contactModel');
@@ -81,7 +89,7 @@ const getAllChats = asyncHandler(async (req, res) => {
 
     // Sanitize all messages directly replacing the message field
     const sanitizedMessages = chat.messages.map(message => {
-      message.message = sanitizeMessage(message.message); // Replace the message content with the sanitized version
+      message.message = sanitizeForDisplay(message.message); // Replace the message content with the sanitized version
       return message.toJSON(); // Convert message instance to plain object
     });
 
@@ -103,7 +111,7 @@ const getAllChats = asyncHandler(async (req, res) => {
         unseenMsgs: chat.unseenMsgs,
         lastMessage: lastMessage ? {
           ...lastMessage.toJSON(),
-          message: sanitizeMessage(lastMessage.message), // Replace the last message content with the sanitized version
+          message: sanitizeForDisplay(lastMessage.message), // Replace the last message content with the sanitized version
         } : null,
         messages: sanitizedMessages, // Include sanitized messages
       },
@@ -159,10 +167,10 @@ const getChatById = asyncHandler(async (req, res) => {
     unseenMsgs: chat.unseenMsgs,
     lastMessage: lastMessage ? {
       ...lastMessage.toJSON(),
-      message: sanitizeMessage(lastMessage.message), // Replace the last message content with the sanitized version
+      message: sanitizeForDisplay(lastMessage.message), // Replace the last message content with the sanitized version
     } : null,
     chat: chat.messages.map(message => {
-      message.message = sanitizeMessage(message.message); // Replace the message content with the sanitized version
+      message.message = sanitizeForDisplay(message.message); // Replace the message content with the sanitized version
       return message.toJSON(); // Convert message instance to plain object
     }),
   };
@@ -181,18 +189,43 @@ const getChatById = asyncHandler(async (req, res) => {
 
 const sendMessage = asyncHandler(async (req, res) => {
   try {
-    const { chatId, message } = req.body.data.obj;
-    const senderId = req.user.id;
-    const senderName = req.user.username;
+      const { chatId, message } = req.body.data.obj;
+      const senderId = req.user.id;
+      const senderName = req.user.username;
+      let violation = false;
 
+      const chatViolation = await ChatViolation.findOne({ where: { userId: senderId } });
 
-    // Create a new message
-    const newMessage = await ChatMessage.create({ chatId, message, senderId, senderName });
+      // If the user has more than 5 violations, prevent them from sending the message
+      if (chatViolation && chatViolation.numberOfViolations > 5) {
+          throw new Error('You have violated the chat regulations too many times and are no longer allowed to send messages.');
+      }
 
-    await checkAndCountViolations(message, senderId);
+      // Enforce message gap and length limit
+      await enforceMessageTimer(senderId, 1000);  // 1 seconds gap
+      enforceMessageLength(message, 500);  // 500 characters limit
 
-    // Update the lastMessageId in the Chat model
-    await updateLastMessage(chatId, newMessage.id);
+      // Sanitize message content
+      const sanitizedMessage = sanitizeInput(message);
+      const newMessage = await ChatMessage.create({ chatId, message: sanitizedMessage, senderId, senderName });
+      console.log("Message documented")
+      // Check and count violations
+      await checkAndCountViolations(sanitizedMessage, senderId);
+
+      const chatViolationAfter = await ChatViolation.findOne({ where: { userId: senderId } });
+      
+      console.log("Detecting violation")
+      console.log(chatViolationAfter.numberOfViolations)
+      console.log(chatViolation.numberOfViolations)
+
+      if (chatViolationAfter.numberOfViolations != chatViolation.numberOfViolations) {
+        violation = true;
+        console.log("Detecting violation = true")
+      }
+
+      // Update last message in the chat
+      await updateLastMessage(chatId, newMessage.id);
+      console.log("Update LastMessage")
 
     const chatsContacts = await ChatParticipant.findOne({
       where: { chatId },
@@ -201,16 +234,19 @@ const sendMessage = asyncHandler(async (req, res) => {
         include: [{ model: ChatMessage, as: 'messages' }],
       }],
     });
-    const id = chatsContacts.id;
+      
+      console.log("Getting Id")
 
-    // Emit the new message event
-    const io = req.app.get('io');
-    io.emit('newMessage', { id, message: newMessage });
+      const id = chatsContacts.id;
 
-    res.status(201).json(newMessage);
+      // Emit the new message event
+      const io = req.app.get('io');
+      io.emit('newMessage', { id, message: newMessage, violation});
+
+      res.status(201).json(newMessage);
   } catch (error) {
-    console.error("Error sending message:", error);
-    res.status(500).json({ error: "An error occurred while sending the message" });
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "An error occurred while sending the message" });
   }
 });
 
@@ -249,15 +285,6 @@ const sendMessageManual = asyncHandler(async (req, res) => {
   res.status(201).json(newMessage);
 });
 
-// @desc manually update last message
-// @access Private
-const updateLastMessage = async (chatId, messageId) => {
-  const chat = await Chat.findByPk(chatId);
-  if (chat) {
-    chat.lastMessageId = messageId;
-    await chat.save();
-  }
-};
 
 
 // @desc Get messages from a chat
@@ -372,7 +399,23 @@ const getUserNameById = asyncHandler(async (req, res) => {
 });
 
 
+const userViolationCount = asyncHandler(async (req, res) => {
+  const userId = req.user.id
+
+  violationCount = 0;
+
+  let chatViolation = await ChatViolation.findOne({ where: { userId } });
+
+  if (!chatViolation) {
+      chatViolation = await ChatViolation.create({ userId, numberOfViolations: violationCount });
+
+  }
+
+  res.status(200).json(chatViolation);
+});
+
 module.exports = {
+  userViolationCount,
   getAllChats,
   getChatById,
   sendMessage,
