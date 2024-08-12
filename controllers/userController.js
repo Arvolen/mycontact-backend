@@ -105,7 +105,7 @@ const currentUser = asyncHandler(async (req, res) => {
         id: 1,
         username: 'abcd1234',
         email: 'aa@qq.com',
-        role: 'member',
+        role: 'admin',
         level: 3,
     };
 
