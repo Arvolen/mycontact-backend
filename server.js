@@ -9,6 +9,7 @@ require("dotenv").config();
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const rateLimitingMiddleware = require('./middleware/rateLimitingMiddleware')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -44,6 +45,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+app.use(rateLimitingMiddleware)
 
 // Multer configuration
 const storage = multer.diskStorage({

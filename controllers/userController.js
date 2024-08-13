@@ -1,27 +1,26 @@
+//controllers/userController
+
 const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel"); // Adjust the path as necessary
-const { findConfigFile } = require("typescript");
+const User = require("../models/userModel");
+const { hashPassword, comparePasswords } = require("../utils/encryptionUtil");
+const { validateRegisterInput, validateLoginInput } = require("../utils/validationUtil");
 
 //@desc Register a user
 //@route POST /api/users
 //@access public
 const registerUser = asyncHandler(async (req, res) => {
+    validateRegisterInput(req.body);
+
     const { name, username, email, password } = req.body;
-
-    if (!name || !username || !email || !password) {
-        res.status(400);
-        throw new Error("All fields are mandatory");
-    }
-
     const userAvailable = await User.findOne({ where: { email } });
+
     if (userAvailable) {
         res.status(400);
         throw new Error("User already registered");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
     const user = await User.create({
         name,
         username,
@@ -30,20 +29,18 @@ const registerUser = asyncHandler(async (req, res) => {
         level: 1
     });
 
-    console.log('User created', user);
-
     if (user) {
         const token = jwt.sign(
-        { user },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: process.env.ACCESS_EXPIRATION }
-    );
+            { user },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: process.env.ACCESS_EXPIRATION }
+        );
 
-    res.status(201).json({
-        _id: user.id,
-        email: user.email,
-        token: `Bearer ${token}`
-    });
+        res.status(201).json({
+            _id: user.id,
+            email: user.email,
+            token: `Bearer ${token}`
+        });
     } else {
         res.status(400);
         throw new Error("User data is not valid");
@@ -54,16 +51,12 @@ const registerUser = asyncHandler(async (req, res) => {
 //@route POST /api/users/login
 //@access public
 const loginUser = asyncHandler(async (req, res) => {
+    validateLoginInput(req.body);
+
     const { email, password } = req.body;
-
-    if (!email || !password) {
-        res.status(400);
-        throw new Error("All fields are mandatory");
-    }
-
     const user = await User.findOne({ where: { email } });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user && await comparePasswords(password, user.password)) {
         const accessToken = jwt.sign(
             {
                 user: {

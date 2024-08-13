@@ -4,11 +4,34 @@ const { ChatMessage, ChatParticipant, Chat } = require('../models/chatModel');
 const { badWordList } = require('../utils/chatHelper');
 
 const sanitizeInput = (input) => {
-    return input
+    // Convert input to string to avoid non-string input issues
+    input = String(input);
+
+    // Basic HTML entity replacements
+    input = input
         .replace(/'/g, "&#39;")  // Replace single quotes
         .replace(/"/g, "&#34;")  // Replace double quotes
         .replace(/</g, "&lt;")   // Replace '<' 
         .replace(/>/g, "&gt;");  // Replace '>'
+
+    // Prevent Directory Traversal by removing suspicious patterns
+    input = input
+        .replace(/\.\.\//g, '')   // Remove '../'
+        .replace(/\.\./g, '');    // Remove remaining '..'
+
+    // Prevent Command Injection by removing special shell characters
+    input = input
+        .replace(/[\$&|;`\\]/g, '') // Remove shell-specific characters
+        .replace(/\r?\n|\r/g, '');  // Remove newlines (to prevent command chaining)
+        
+    // Prevent potential null byte injections
+    input = input.replace(/\0/g, '');  // Remove null bytes
+    
+    // Strip out any remaining non-alphanumeric characters that are not essential
+    // You can adjust this regex based on the specific needs of your application
+    input = input.replace(/[^\w\s@.-]/gi, '');
+
+    return input;
 };
 
 // Function to sanitize messages for frontend display
