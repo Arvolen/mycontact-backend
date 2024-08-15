@@ -19,7 +19,7 @@ router.get('/:id', validateToken, isAdminHandler, getGameDetails);
 // User
 router.use(validateToken);
 router.post('/start', createGame);
-router.post('/end', endGame);
+router.post('/end/end', endGame);
 router.post('/transaction', logTransaction);
 router.get('/user', getUserGames);
 

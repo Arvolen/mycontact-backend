@@ -20,9 +20,10 @@ const createGame = asyncHandler(async (req, res) => {
 // @access Private
 const endGame = asyncHandler(async (req, res) => {
   const { game_id, score } = req.body;
+  const user_id = req.user.id;
   console.log("Ending game with ID:", game_id);
 
-  const game = await GameModel.findByPk(game_id);
+  const game = await GameModel.create({ user_id, game_id, score });
   if (!game) {
     res.status(404);
     throw new Error('Game not found');
@@ -90,6 +91,7 @@ const getUserGames = asyncHandler(async (req, res) => {
 
   res.status(200).json(games);
 });
+
 
 module.exports = {
   createGame,
