@@ -3,6 +3,7 @@
 const asyncHandler = require('express-async-handler');
 const jwt = require("jsonwebtoken");
 const User = require('../models/userModel');
+const UserWallet = require("../models/userWalletModel"); 
 const { hashPassword, comparePasswords } = require("../utils/encryptionUtil");
 const { validateRegisterInput, validateLoginInput } = require("../utils/validationUtil");
 
@@ -27,6 +28,10 @@ const adminRegister = asyncHandler(async (req, res) => {
         role: "admin",
         level: 1
     });
+
+    const wallet = await UserWallet.create({ userId: newAdmin.id });
+    console.log("Wallet created: ", wallet);
+
 
     const token = jwt.sign(
         { id: newAdmin.id, email: newAdmin.email, username: newAdmin.username, role: newAdmin.role, level: newAdmin.level },

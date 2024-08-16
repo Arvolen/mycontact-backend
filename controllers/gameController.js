@@ -1,15 +1,24 @@
 const asyncHandler = require('express-async-handler');
 const GameModel = require('../models/gameModel');
+const GameListModel = require('../models/gameListModel');
 const GameTransactionModel = require('../models/gameTransactionModel');
 
 // @desc Create a new game
 // @route POST /api/games/start
 // @access Private
 const createGame = asyncHandler(async (req, res) => {
-  const { user_id } = req.user;
+
+  const { id, difficulty } = req.body;
+  const  user_id  = req.user.id;
   console.log("Starting a new game for user", user_id);
 
-  const game = await GameModel.create({ user_id });
+  const game_data = await GameListModel.findByPk(id);
+
+  console.log("GameData found")
+  const game_id = game_data.id
+  console.log("Game Id found")
+
+  const game = await GameModel.create({ user_id, game_id, difficulty });
   console.log("Game started:", game);
 
   res.status(201).json(game);
@@ -19,11 +28,12 @@ const createGame = asyncHandler(async (req, res) => {
 // @route POST /api/games/end
 // @access Private
 const endGame = asyncHandler(async (req, res) => {
-  const { game_id, score } = req.body;
-  const user_id = req.user.id;
-  console.log("Ending game with ID:", game_id);
+  const { id, score } = req.body;
 
-  const game = await GameModel.create({ user_id, game_id, score });
+  console.log("Ending game with ID:", id);
+
+  const game = await GameModel.findByPk(id);
+
   if (!game) {
     res.status(404);
     throw new Error('Game not found');
