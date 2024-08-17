@@ -75,12 +75,12 @@ const loginUser = asyncHandler(async (req, res) => {
         name: "abcd",
         username: 'abcd1234',
         email: 'aa@qq.com',
-        password: await bcrypt.hash('11111', 10),
+        password: await hashPassword('11111', 10),
         role: 'member',
         level: 3,
     };
 
-    if (email === mockUser.email && await bcrypt.compare(password, mockUser.password)) {
+    if (email === mockUser.email && await comparePasswords(password, mockUser.password)) {
 
         const accessToken = jwt.sign(
             {
