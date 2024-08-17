@@ -1,4 +1,3 @@
-// models/chatViolationModel.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection');
 
@@ -11,7 +10,7 @@ const ChatViolation = sequelize.define('ChatViolation', {
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
+
   },
   numberOfViolations: {
     type: DataTypes.INTEGER,

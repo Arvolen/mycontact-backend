@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection');
-const GameModel = require('./gameModel');
+const GameListModel = require('./gameListModel');
 
 const GameTransactionModel = sequelize.define('GameTransactionModel', {
   transaction_id: {
@@ -11,8 +11,8 @@ const GameTransactionModel = sequelize.define('GameTransactionModel', {
   game_id: {
     type: DataTypes.INTEGER,
     references: {
-      model: GameModel,
-      key: 'game_id'
+      model: GameListModel,
+      key: 'id'
     }
   },
   event_time: {

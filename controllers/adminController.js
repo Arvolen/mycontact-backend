@@ -1,26 +1,24 @@
 // controllers/adminController.js
 
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const asyncHandler = require('express-async-handler');
+const jwt = require("jsonwebtoken");
 const User = require('../models/userModel');
+const UserWallet = require("../models/userWalletModel"); 
+const { hashPassword, comparePasswords } = require("../utils/encryptionUtil");
+const { validateRegisterInput, validateLoginInput } = require("../utils/validationUtil");
 
 //@access public
 const adminRegister = asyncHandler(async (req, res) => {
+    validateRegisterInput(req.body);
+
     const { name, username, email, password } = req.body;
-
     const existingAdmin = await User.findOne({ where: { email } });
+
     if (existingAdmin) {
-        throw new CustomError("Email already registered", 400);
+        throw new Error("Email already registered");
     }
 
-    if (!name || !username || !email || !password) {
-        res.status(400);
-        throw new Error("All fields are mandatory");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword)
+    const hashedPassword = await hashPassword(password);
 
     const newAdmin = await User.create({
         username,
@@ -30,6 +28,10 @@ const adminRegister = asyncHandler(async (req, res) => {
         role: "admin",
         level: 1
     });
+
+    const wallet = await UserWallet.create({ userId: newAdmin.id });
+    console.log("Wallet created: ", wallet);
+
 
     const token = jwt.sign(
         { id: newAdmin.id, email: newAdmin.email, username: newAdmin.username, role: newAdmin.role, level: newAdmin.level },
@@ -43,17 +45,14 @@ const adminRegister = asyncHandler(async (req, res) => {
         token: `Bearer ${token}`
     });
 });
-
 //@access public
 const adminLogin = asyncHandler(async (req, res) => {
-console.log("Logging in into admin")
+    validateLoginInput(req.body);
+
     const { email, password } = req.body;
-    if (!email || !password) {
-        throw new CustomError("All fields are required", 400);
-    }
-    const admin = await User.findOne({ where: { email, role: "admin" } }); // Ensure user is an admin
-    console.log("User is admin")
-    if (admin && (await bcrypt.compare(password, admin.password))) {
+    const admin = await User.findOne({ where: { email, role: "admin" } });
+
+    if (admin && await comparePasswords(password, admin.password)) {
         const accessToken = jwt.sign(
             {
                 user: {
@@ -68,30 +67,12 @@ console.log("Logging in into admin")
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: process.env.ACCESS_EXPIRATION }
         );
-
-        // const refreshToken = jwt.sign(
-        //     {
-        //         user: {
-        //             id: admin.id,
-        //         },
-        //     },
-        //     process.env.REFRESH_SECRET,
-        //     { expiresIn: process.env.REFRESH_EXPIRATION }
-        // );
-
-        // // Set the refreshToken as an HttpOnly cookie
-        // res.cookie('refreshToken', refreshToken, {
-        //     httpOnly: true, // to prevent client-side access
-        //     secure: true,  // ensure the cookie is sent over HTTPS
-        //     sameSite: 'None', // explicitly set this to 'None' for cross-site cookies
-        //     maxAge: 5 * 24 * 60 * 60 * 1000 // Expiry time in milliseconds (e.g., 5 days)
-        // });
-        return res.status(200).json({
+        res.status(200).json({
             accessToken: "Bearer " + accessToken,
             message: "Admin login successful",
         });
     } else {
-        throw new CustomError("Invalid credentials", 401);
+        throw new Error("Invalid credentials");
     }
 });
 

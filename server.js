@@ -9,6 +9,7 @@ require("dotenv").config();
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const rateLimitingMiddleware = require('./middleware/rateLimitingMiddleware')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -45,6 +46,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+app.use(rateLimitingMiddleware)
 
 // Multer configuration
 const storage = multer.diskStorage({
@@ -86,6 +89,8 @@ app.use('/api/admin', require("./routes/adminRoutes"));
 app.use('/api/announcements', require("./routes/announcementRoutes"));
 app.use('/api/avatars', require("./routes/avatarRoutes"));
 app.use('/api/chats', require("./routes/chatRoutes"));
+app.use('/api/games', require("./routes/gameRoutes"));
+app.use('/api/eWallet', require("./routes/userWalletRoutes"));
 app.use(errorHandler);
 
 io.on('connection', (socket) => {
