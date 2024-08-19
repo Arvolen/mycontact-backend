@@ -16,6 +16,7 @@ const Avatar = sequelize.define('Avatar', {
     allowNull: false
   }
 }, {
+  tableName: 'avatars',
   timestamps: false
 });
 

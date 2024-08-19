@@ -51,6 +51,7 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.NOW
   },
 }, {
+  tableName: 'users',
   timestamps: false
 });
 

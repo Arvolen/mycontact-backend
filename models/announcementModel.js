@@ -53,6 +53,9 @@ const Announcements = sequelize.define('Announcement', {
     type: DataTypes.STRING,
     allowNull: true
   }
+},
+{
+  tableName: "announcements"
 }
 );
 

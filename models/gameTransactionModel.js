@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection');
-const GameListModel = require('./gameListModel');
+
 
 const GameTransactionModel = sequelize.define('GameTransactionModel', {
   transaction_id: {
@@ -11,7 +11,7 @@ const GameTransactionModel = sequelize.define('GameTransactionModel', {
   game_id: {
     type: DataTypes.INTEGER,
     references: {
-      model: GameListModel,
+      model: 'gamelistmodels',
       key: 'id'
     }
   },
@@ -26,6 +26,7 @@ const GameTransactionModel = sequelize.define('GameTransactionModel', {
     type: DataTypes.TEXT
   }
 }, {
+  tableName: 'gametransactionmodels',
   timestamps: false
 });
 

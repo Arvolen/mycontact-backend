@@ -1,6 +1,5 @@
 // services/sanitizeService.js
-const { ChatViolation } = require('../models/chatRecord');
-const { ChatMessage, ChatParticipant, Chat } = require('../models/chatModel');
+const { ChatMessage, ChatParticipant, Chat, ChatViolation} = require('../models/chatModel');
 const { badWordList } = require('../utils/chatHelper');
 
 const sanitizeInput = (input) => {
@@ -67,7 +66,7 @@ const checkAndCountViolations = async (message, userId) => {
 
 const enforceMessageTimer = async (userId, cooldownTime) => {
     const lastMessage = await ChatMessage.findOne({
-        where: { senderId: userId },
+        where: { userId: userId },
         order: [['time', 'DESC']]
     });
 

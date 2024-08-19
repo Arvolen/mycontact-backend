@@ -11,7 +11,7 @@ const UserWallet = sequelize.define('UserWallet', {
   userId: {
     type: DataTypes.INTEGER,
     references: {
-      model: User,
+      model: 'users',
       key: 'id'
     },
     allowNull: false
@@ -29,6 +29,7 @@ const UserWallet = sequelize.define('UserWallet', {
     defaultValue: true,
   }
 }, {
+  tableName: 'userwallets',
   timestamps: true
 });
 

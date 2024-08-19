@@ -6,10 +6,11 @@ const UserWallet = require('../models/userWalletModel');
 // @access Private
 const addBalance = asyncHandler(async (req, res) => {
     const { amount } = req.body;
+
     const userId = req.user.id;
-  
-    const wallet = await UserWallet.findOne({ where: { userId } });
-  
+    console.log(amount, userId)
+    const wallet = await UserWallet.findOne({ where: { userId: userId } });
+    console.log("here")
     if (!wallet) {
       res.status(404);
       throw new Error('Wallet not found');

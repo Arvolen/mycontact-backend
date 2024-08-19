@@ -13,9 +13,13 @@ const ChatMessage = sequelize.define('ChatMessage', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  senderId: {
+  userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
   },
   senderName:{
     type: DataTypes.STRING,
@@ -26,6 +30,7 @@ const ChatMessage = sequelize.define('ChatMessage', {
     defaultValue: DataTypes.NOW,
   },
 }, {
+  tableName: 'chatmessages',
   timestamps: false,
 });
 
@@ -49,11 +54,12 @@ const Chat = sequelize.define('Chat', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: ChatMessage,
+      model: 'chatmessages',
       key: 'id',
     },
   },
 }, {
+  tableName: "chats",
   timestamps: false,
 });
 
@@ -68,7 +74,7 @@ const ChatParticipant = sequelize.define('ChatParticipant', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: Chat,
+      model: 'chats',
       key: 'id',
     },
   },
@@ -76,7 +82,7 @@ const ChatParticipant = sequelize.define('ChatParticipant', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: User,
+      model: 'users',
       key: 'id',
     },
   },
@@ -115,14 +121,41 @@ const ChatParticipant = sequelize.define('ChatParticipant', {
     defaultValue: 'channel'
   }
 }, {
+  tableName: "chatparticipants",
   timestamps: false,
+});
+
+const ChatViolation = sequelize.define('ChatViolation', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  numberOfViolations: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+}, {
+  tableName: 'chatviolations',
+  timestamps: true,
 });
 
 // Define associations
 Chat.hasMany(ChatMessage, { foreignKey: 'chatId', as: 'messages' });
+Chat.belongsTo(User, { foreignKey: 'userId' });
+
 ChatMessage.belongsTo(Chat, { foreignKey: 'chatId' });
 
 ChatParticipant.belongsTo(Chat, { foreignKey: 'chatId' });
 ChatParticipant.belongsTo(User, { foreignKey: 'userId' });
+ChatViolation.belongsTo(User, { foreignKey: 'userId' });
 
-module.exports = { Chat, ChatMessage, ChatParticipant };
+module.exports = { Chat, ChatMessage, ChatParticipant, ChatViolation };

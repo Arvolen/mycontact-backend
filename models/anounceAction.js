@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection');
-const Announcements = require('./announcementModel'); // Assuming you have defined Announcement model
-const User = require('./userModel'); // Assuming you have defined User model
+const Announcements = require('./announcementModel');
+const User = require('./userModel');
 
 const UserAnnouncementInteraction = sequelize.define('UserAnnouncementInteraction', {
   id: {
@@ -12,7 +12,7 @@ const UserAnnouncementInteraction = sequelize.define('UserAnnouncementInteractio
   announcementId: {
     type: DataTypes.INTEGER,
     references: {
-      model: Announcements,
+      model: 'announcements',
       key: 'id'
     },
     allowNull: false
@@ -20,7 +20,7 @@ const UserAnnouncementInteraction = sequelize.define('UserAnnouncementInteractio
   userId: {
     type: DataTypes.INTEGER,
     references: {
-      model: User,
+      model: 'users',
       key: 'id'
     },
     allowNull: false
@@ -38,6 +38,7 @@ const UserAnnouncementInteraction = sequelize.define('UserAnnouncementInteractio
     defaultValue: false
   }
 }, {
+  tableName: "userannouncementinteractions",
   timestamps: true
 });
 
