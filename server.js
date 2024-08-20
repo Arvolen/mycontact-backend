@@ -73,14 +73,6 @@ const upload = multer({
   }
 });
 
-// Endpoint to handle file upload
-app.post('/api/upload-avatar', upload.single('image'), (req, res) => {
-  if (req.file) {
-    res.status(200).send({ message: 'File uploaded successfully', file: req.file });
-  } else {
-    res.status(400).send({ message: 'File upload failed' });
-  }
-});
 
 app.use('/api/contacts', require("./routes/contactRoutes"));
 app.use('/api/users', require("./routes/userRoutes"));

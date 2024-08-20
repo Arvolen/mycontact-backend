@@ -7,19 +7,23 @@ const {
   deactivateWallet, 
   reactivateWallet 
 } = require("../controllers/userWalletController");
+const isAdminHandler = require("../middleware/isAdminHandler");
 const validateToken = require("../middleware/validateToken");
 const router = express.Router();
 
-router.post("/wallet/create", validateToken, createWallet);
+router.use(validateToken)
 
-router.post("/wallet/add", validateToken, addBalance);
+router.get("/wallet/balance", getBalance);
+router.post("/wallet/deduct", deductBalance);
 
-router.post("/wallet/deduct", validateToken, deductBalance);
+router.use(isAdminHandler)
+ 
+router.post("/wallet/create", createWallet);
 
-router.get("/wallet/balance", validateToken, getBalance);
+router.post("/wallet/add", addBalance);
 
-router.post("/wallet/deactivate", validateToken, deactivateWallet);
+router.post("/wallet/deactivate", deactivateWallet);
 
-router.post("/wallet/reactivate", validateToken, reactivateWallet);
+router.post("/wallet/reactivate", reactivateWallet);
 
 module.exports = router;

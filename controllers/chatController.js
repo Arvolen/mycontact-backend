@@ -100,10 +100,7 @@ const getAllChats = asyncHandler(async (req, res) => {
       userId: chatContact.userId,
       role: chatContact.role,
       about: chatContact.about,
-      avatar: chatContact.avatar,
       fullName: chatContact.fullName,
-      status: chatContact.status,
-      avatarColor: chatContact.avatarColor,
       active: chatContact.active,
       chat: {
         id: chat.id,

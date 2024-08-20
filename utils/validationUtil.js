@@ -1,6 +1,6 @@
 const validateRegisterInput = (input) => {
-    const { name, username, email, password } = input;
-    if (!name || !username || !email || !password) {
+    const { firstName, lastName, username, email, password } = input;
+    if (!firstName || !lastName || !username || !email || !password) {
         throw new Error("All fields are mandatory");
     }
 };

@@ -11,7 +11,7 @@ const { validateRegisterInput, validateLoginInput } = require("../utils/validati
 const adminRegister = asyncHandler(async (req, res) => {
     validateRegisterInput(req.body);
 
-    const { name, username, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
     const existingAdmin = await User.findOne({ where: { email } });
 
     if (existingAdmin) {
@@ -22,7 +22,8 @@ const adminRegister = asyncHandler(async (req, res) => {
 
     const newAdmin = await User.create({
         username,
-        name,
+        firstName,
+        lastName ,
         email,
         password: hashedPassword,
         role: "admin",
@@ -56,7 +57,7 @@ const adminLogin = asyncHandler(async (req, res) => {
         const accessToken = jwt.sign(
             {
                 user: {
-                    name: admin.name,
+
                     username: admin.username,
                     email: admin.email,
                     id: admin.id,
@@ -87,7 +88,8 @@ const currentAdminStatus = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         id: admin.id,
-        name: admin.name,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
         username: admin.username,
         email: admin.email,
         role: admin.role,

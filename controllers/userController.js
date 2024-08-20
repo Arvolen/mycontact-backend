@@ -13,7 +13,7 @@ const { validateRegisterInput, validateLoginInput } = require("../utils/validati
 const registerUser = asyncHandler(async (req, res) => {
     validateRegisterInput(req.body);
 
-    const { name, username, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
     const userAvailable = await User.findOne({ where: { email } });
 
     if (userAvailable) {
@@ -23,7 +23,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const hashedPassword = await hashPassword(password);
     const user = await User.create({
-        name,
+        firstName, 
+        lastName,
         username,
         email,
         password: hashedPassword,
@@ -68,7 +69,8 @@ const loginUser = asyncHandler(async (req, res) => {
         const accessToken = jwt.sign(
             {
                 user: {
-                    name: user.name,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     username: user.username,
                     email: user.email,
                     id: user.id,
@@ -125,21 +127,22 @@ const updateUserLevel = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     console.log("Updating");
     const userId = req.user.id;
-    const { name, username, country, contact, accountStatus, email } = req.body;
+    const { firstName, lastName, username, country, contact, accountStatus, email } = req.body;
 
-    if (!name && !username && !country && !contact && !accountStatus && !email) {
+    if (!firstName && !lastName && !username && !country && !contact && !accountStatus && !email) {
         res.status(400);
         throw new Error('No valid fields provided for update');
     }
 
     const user = await User.findByPk(userId);
-
+    
     if (!user) {
         res.status(404);
         throw new Error('User not found');
     }
-
-    if (name) user.name = name;
+    console.log("Here");
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
     if (username) user.username = username;
     if (country) user.country = country;
     if (contact) user.contact = contact;
