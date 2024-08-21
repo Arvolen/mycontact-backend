@@ -1,17 +1,17 @@
 const express = require('express');
-const { createAvatar, createAvatarFromPath, getUserAvatar, updateUserAvatar, getAllAvatar, deleteAvatar } = require('../controllers/avatarController');
+const { createAvatar, createAvatarFromPath, getUserAvatar, updateUserAvatar, getAllAvatars, deleteAvatar } = require('../controllers/avatarController');
 const validateToken = require('../middleware/validateToken');
-const { adminLogin } = require('../controllers/adminController');
 const isAdminHandler = require('../middleware/isAdminHandler');
-
+const upload = require('../middleware/avatarUpload');
 const router = express.Router();
 
 
-router.post('/', validateToken, isAdminHandler, createAvatar);
-router.get('/all', validateToken, isAdminHandler, getAllAvatar);
-router.post('/path', validateToken, isAdminHandler, createAvatarFromPath);
+
+router.post('/', validateToken, isAdminHandler, upload.single('image'), createAvatar);
+router.post('/path', validateToken, isAdminHandler, upload.single('image'), createAvatarFromPath);
+router.get('/all', validateToken, isAdminHandler, getAllAvatars);
 router.get('/', validateToken, getUserAvatar);
-router.put('/:id', validateToken, isAdminHandler, updateUserAvatar);
+router.put('/:id', validateToken, isAdminHandler, upload.single('image'), updateUserAvatar);
 router.delete('/:id', validateToken, isAdminHandler, deleteAvatar);
 
 module.exports = router;
