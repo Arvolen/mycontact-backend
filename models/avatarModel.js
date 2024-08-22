@@ -13,7 +13,7 @@ const Avatar = sequelize.define('Avatar', {
   },
   level: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: true
   },
   userId: {
     type: DataTypes.INTEGER,

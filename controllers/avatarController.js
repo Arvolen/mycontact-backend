@@ -7,12 +7,20 @@ const path = require('path');
 // @route POST /api/avatars
 // @access Private
 const createAvatar = asyncHandler(async (req, res) => {
-  console.log("Creating avatar")
+  console.log("Creating avatar");
   const { level } = req.body;
-  console.log("Creating avatar")
+
   if (!req.file || level === undefined) {
     res.status(400);
     throw new Error('Image and level are mandatory');
+  }
+
+  // Check if the level is already in use
+  const existingAvatar = await Avatar.findOne({ where: { level } });
+
+  if (existingAvatar) {
+    console.error('Level already in use');
+    return res.status(409).json({ message: 'Level already in use' });
   }
 
   // Save the file path
@@ -31,25 +39,33 @@ const createAvatar = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc Create an avatar from a file path
-// @route POST /api/avatars/path
+// @desc Create an avatar
+// @route POST /api/avatars
 // @access Private
-const createAvatarFromPath = asyncHandler(async (req, res) => {
-  const { imagePath, level } = req.body;
+const createAvatarUser = asyncHandler(async (req, res) => {
+  console.log("Creating avatar");
+  const userId = req.user.id;
 
-  if (!imagePath || level === undefined) {
+  if (!req.file || level === undefined) {
     res.status(400);
-    throw new Error('Image path and level are mandatory');
+    throw new Error('Image and level are mandatory');
   }
 
-  try {
-    if (!fs.existsSync(imagePath)) {
-      throw new Error('Image file does not exist');
-    }
+  // Check if the level is already in use
+  const existingAvatar = await Avatar.findOne({ where: { userId } });
 
+  if (existingAvatar) {
+    console.error('Level already in use');
+    return res.status(409).json({ message: 'Level already in use' });
+  }
+
+  // Save the file path
+  const imagePath = path.join('uploads', req.file.filename);
+
+  try {
     const newAvatar = await Avatar.create({
-      imageUrl: imagePath,
-      level
+      imageUrl: imagePath, // Store the file path
+      userId
     });
 
     res.status(201).json(newAvatar);
@@ -58,6 +74,7 @@ const createAvatarFromPath = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Error creating avatar' });
   }
 });
+
 
 // @desc Get user's avatar
 // @route GET /api/avatars
@@ -102,9 +119,36 @@ const getAllAvatars = asyncHandler(async (req, res) => {
 // @desc Update user's avatar
 // @route PUT /api/avatars/:id
 // @access Private
-const updateUserAvatar = asyncHandler(async (req, res) => {
+const updateAvatar = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { level } = req.body;
+
+  try {
+    const avatar = await Avatar.findOne({ where: { id } });
+
+    if (!avatar) {
+      res.status(404);
+      throw new Error('Avatar not found');
+    }
+
+    if (req.file) {
+      // Update image path if a new file is uploaded
+      avatar.imageUrl = path.join('uploads', req.file.filename);
+    }
+
+    await avatar.save();
+    res.json(avatar);
+  } catch (err) {
+    console.error('Error updating avatar:', err);
+    res.status(500).json({ message: 'Error updating avatar' });
+  }
+});
+
+// @desc Update user's avatar
+// @route PUT /api/avatars/:id
+// @access Private
+const updateAvatarUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
   try {
     const avatar = await Avatar.findOne({ where: { id } });
@@ -128,6 +172,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Error updating avatar' });
   }
 });
+
 
 // @desc Delete an avatar
 // @route DELETE /api/avatars/:id
@@ -161,9 +206,10 @@ const deleteAvatar = asyncHandler(async (req, res) => {
 
 module.exports = {
   createAvatar,
-  createAvatarFromPath,
+  createAvatarUser,
   getUserAvatar,
-  updateUserAvatar,
+  updateAvatar,
+  updateAvatarUser,
   getAllAvatars,
   deleteAvatar
 };

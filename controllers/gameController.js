@@ -32,18 +32,27 @@ const endGame = asyncHandler(async (req, res) => {
   console.log("Ending game with ID:", id);
 
   const game = await GameModel.findByPk(id);
+  console.log(game)
 
   if (!game) {
     res.status(404);
     throw new Error('Game not found');
   }
 
-  game.end_time = new Date();
+  
+
+if (game.score == null)
+{  game.end_time = new Date();
   game.score = score;
   await game.save();
   console.log("Game ended:", game);
 
-  res.status(200).json(game);
+  res.status(200).json(game);}
+
+  else {
+    res.status(404);
+    throw new Error('Game already ended');
+  }
 });
 
 

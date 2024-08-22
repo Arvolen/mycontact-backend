@@ -310,6 +310,7 @@ const editMessage = asyncHandler(async (req, res) => {
 // @desc Delete a message
 // @access Private
 const deleteMessage = asyncHandler(async (req, res) => {
+
   const { messageId } = req.params;
 
   const deleted = await ChatMessage.destroy({ where: { id: messageId } });
@@ -336,12 +337,8 @@ const getAllUsersInChat = asyncHandler(async (req, res) => {
 // @access Private
 const getAllUserChats = asyncHandler(async (req, res) => {
   console.log("getting all user chat")
-  const userChats = await ChatParticipant.findAll({
-    include: [
-      { model: User, attributes: ['id', 'name', 'email'] }, // Include related User information
-      { model: Chat, attributes: ['id', 'unseenMsgs', 'lastMessageId'] } // Include related Chat information
-    ]
-  });
+
+  const userChats = await ChatParticipant.findAll({});
   res.json(userChats);
 });
 
@@ -367,15 +364,35 @@ const updateChatDetail = asyncHandler(async (req, res) => {
 // @desc Admin: Delete a chat
 // @access Admin
 const deleteChat = asyncHandler(async (req, res) => {
-  const { chatId } = req.params;
+  console.log("Deleting Chat");
 
+  const { chatId } = req.params;
+  console.log("chatId:", chatId);
+
+  // Find the chat by ID
   const chat = await Chat.findByPk(chatId);
+
   if (!chat) {
     res.status(404);
     throw new Error('Chat not found');
   }
 
+  // Delete all related messages first
+  await ChatMessage.destroy({
+    where: { chatId: chat.id },
+  });
+  console.log("ChatMessages deleted");
+
+  // Delete all related participants
+  await ChatParticipant.destroy({
+    where: { chatId: chat.id },
+  });
+  console.log("ChatParticipants deleted");
+
+  // Finally, delete the chat
   await chat.destroy();
+  console.log("Chat deleted");
+
   res.status(204).end();
 });
 

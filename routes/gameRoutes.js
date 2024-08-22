@@ -12,12 +12,9 @@ const {
 
 const router = express.Router();
 
-// Admin
-router.get('/', validateToken, isAdminHandler, getAllGames);
-
-
 // User
 router.use(validateToken);
+router.get('/', getAllGames);
 router.post('/start', createGame);
 router.post('/start/end', endGame);
 
