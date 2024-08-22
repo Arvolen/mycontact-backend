@@ -8,8 +8,7 @@ const {
   updateLastMessage,
   fetchMessagesInBatches
 } = require('../services/chatService');
-const { ChatViolation } = require('../models/chatRecord');
-const { Chat, ChatMessage, ChatParticipant} = require('../models/chatModel');
+const { Chat, ChatMessage, ChatParticipant, ChatViolation} = require('../models/chatModel');
 const User = require('../models/userModel');
 const Contact = require('../models/contactModel');
 
@@ -101,10 +100,7 @@ const getAllChats = asyncHandler(async (req, res) => {
       userId: chatContact.userId,
       role: chatContact.role,
       about: chatContact.about,
-      avatar: chatContact.avatar,
       fullName: chatContact.fullName,
-      status: chatContact.status,
-      avatarColor: chatContact.avatarColor,
       active: chatContact.active,
       chat: {
         id: chat.id,
@@ -190,11 +186,11 @@ const getChatById = asyncHandler(async (req, res) => {
 const sendMessage = asyncHandler(async (req, res) => {
   try {
       const { chatId, message } = req.body.data.obj;
-      const senderId = req.user.id;
+      const userId = req.user.id;
       const senderName = req.user.username;
       let violation = false;
 
-      const chatViolation = await ChatViolation.findOne({ where: { userId: senderId } });
+      const chatViolation = await ChatViolation.findOne({ where: { userId: userId } });
 
       // If the user has more than 5 violations, prevent them from sending the message
       if (chatViolation && chatViolation.numberOfViolations > 5) {
@@ -202,17 +198,17 @@ const sendMessage = asyncHandler(async (req, res) => {
       }
 
       // Enforce message gap and length limit
-      await enforceMessageTimer(senderId, 1000);  // 1 seconds gap
+      await enforceMessageTimer(userId, 1000);  // 1 seconds gap
       enforceMessageLength(message, 500);  // 500 characters limit
 
       // Sanitize message content
       const sanitizedMessage = sanitizeInput(message);
-      const newMessage = await ChatMessage.create({ chatId, message: sanitizedMessage, senderId, senderName });
+      const newMessage = await ChatMessage.create({ chatId, message: sanitizedMessage, userId, senderName });
       console.log("Message documented")
       // Check and count violations
-      await checkAndCountViolations(sanitizedMessage, senderId);
+      await checkAndCountViolations(sanitizedMessage, userId);
 
-      const chatViolationAfter = await ChatViolation.findOne({ where: { userId: senderId } });
+      const chatViolationAfter = await ChatViolation.findOne({ where: { userId: userId } });
       
       console.log("Detecting violation")
       console.log(chatViolationAfter.numberOfViolations)
@@ -253,13 +249,13 @@ const sendMessage = asyncHandler(async (req, res) => {
 const sendMessageManual = asyncHandler(async (req, res) => {
   const { message, chatId } = req.body;
 
-  const senderId = req.user.id;
+  const userId = req.user.id;
   const senderName = req.user.username;
 
-  console.log("Message Data:" , chatId, message, senderId, senderName  )
+  console.log("Message Data:" , chatId, message, userId, senderName  )
 
   // Create a new message
-  const newMessage = await ChatMessage.create({ chatId, message, senderId, senderName });
+  const newMessage = await ChatMessage.create({ chatId, message, userId, senderName });
 
 
   console.log("Message Added")

@@ -7,15 +7,20 @@ const Avatar = sequelize.define('Avatar', {
     autoIncrement: true,
     primaryKey: true
   },
-  image: {
-    type: DataTypes.BLOB('long'), // Use BLOB to store the image data
+  imageUrl: {
+    type: DataTypes.STRING, // Store the file path or URL as a string
     allowNull: false
   },
   level: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
+  tableName: 'avatars',
   timestamps: false
 });
 

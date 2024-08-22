@@ -1,54 +1,79 @@
 const asyncHandler = require('express-async-handler');
 const UserWallet = require('../models/userWalletModel');
+const { sequelize } = require('../config/dbConnection'); 
+
 
 // @desc Add balance to user wallet
 // @route POST /api/wallet/add
 // @access Private
 const addBalance = asyncHandler(async (req, res) => {
-    const { amount } = req.body;
-    const userId = req.user.id;
-  
-    const wallet = await UserWallet.findOne({ where: { userId } });
-  
-    if (!wallet) {
-      res.status(404);
-      throw new Error('Wallet not found');
-    }
-  
-    wallet.balance += parseFloat(amount);
-    await wallet.save();
-  
-    res.status(200).json({ balance: wallet.balance, message: 'Balance added successfully' });
-  });
-  
-  // @desc Deduct balance from user wallet
-  // @route POST /api/wallet/deduct
-  // @access Private
-  const deductBalance = asyncHandler(async (req, res) => {
-    const { amount } = req.body;
-    const userId = req.user.id;
+  const { amount } = req.body;
+  const userId = req.user.id;
 
-    console.log("deducting user balance")
-  
-    const wallet = await UserWallet.findOne({ where: { userId } });
-  
-    if (!wallet) {
-      res.status(404);
-      throw new Error('Wallet not found');
-    }
-  
-    if (wallet.balance < amount) {
-      res.status(400);
-      throw new Error('Insufficient balance');
-    }
-  
-    wallet.balance -= parseFloat(amount);
-    await wallet.save();
+  // Start a transaction
+  const transaction = await sequelize.transaction();
 
-    console.log("deducting user balance sucesss", wallet)
-  
-    res.status(200).json({ balance: wallet.balance, message: 'Balance deducted successfully' });
-  });
+  try {
+      const wallet = await UserWallet.findOne({ where: { userId }, transaction });
+
+      if (!wallet) {
+          await transaction.rollback();
+          res.status(404);
+          throw new Error('Wallet not found');
+      }
+
+      wallet.balance += parseFloat(amount);
+      await wallet.save({ transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      res.status(200).json({ balance: wallet.balance, message: 'Balance added successfully' });
+  } catch (error) {
+      await transaction.rollback();
+      console.error('Error occurred while adding balance:', error);
+      res.status(500).json({ success: false, message: 'An error occurred while adding balance' });
+  }
+});
+
+// @desc Deduct balance from user wallet
+// @route POST /api/wallet/deduct
+// @access Private
+const deductBalance = asyncHandler(async (req, res) => {
+  const { amount } = req.body;
+  const userId = req.user.id;
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+      const wallet = await UserWallet.findOne({ where: { userId }, transaction });
+
+      if (!wallet) {
+          await transaction.rollback();
+          res.status(404);
+          throw new Error('Wallet not found');
+      }
+
+      if (wallet.balance < amount) {
+          await transaction.rollback();
+          res.status(400);
+          throw new Error('Insufficient balance');
+      }
+
+      wallet.balance -= parseFloat(amount);
+      await wallet.save({ transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      res.status(200).json({ balance: wallet.balance, message: 'Balance deducted successfully' });
+  } catch (error) {
+      await transaction.rollback();
+      console.error('Error occurred while deducting balance:', error);
+      res.status(500).json({ success: false, message: 'An error occurred while deducting balance' });
+  }
+});
   
   // @desc Get user wallet balance
   // @route GET /api/wallet/balance

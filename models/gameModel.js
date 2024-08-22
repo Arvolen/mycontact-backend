@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConnection');
-const User = require('./userModel');
-const GameListModel = require('./gameListModel')
+
 
 const GameModel = sequelize.define('GameModel', {
   id: {
@@ -12,14 +11,14 @@ const GameModel = sequelize.define('GameModel', {
   game_id: {
     type: DataTypes.INTEGER,
     references: {
-      model: GameListModel,
+      model: "gamelistmodels",
       key: 'id'
     }
   },
   user_id: {
     type: DataTypes.INTEGER,
     references: {
-      model: User,
+      model: "users",
       key: 'id'
     }
   },
@@ -40,7 +39,7 @@ const GameModel = sequelize.define('GameModel', {
     type: DataTypes.STRING,
     allowNull: true
   }
-}, {
+}, {tableName: 'gamemodels',
   timestamps: false
 });
 

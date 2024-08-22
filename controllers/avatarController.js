@@ -1,28 +1,29 @@
 const asyncHandler = require('express-async-handler');
 const Avatar = require('../models/avatarModel');
-const User = require('../models/userModel');
 const fs = require('fs');
+const path = require('path');
 
 // @desc Create an avatar
 // @route POST /api/avatars
 // @access Private
 const createAvatar = asyncHandler(async (req, res) => {
-  const { image, level } = req.body;
-
-  if (!image || level === undefined) {
+  console.log("Creating avatar")
+  const { level } = req.body;
+  console.log("Creating avatar")
+  if (!req.file || level === undefined) {
     res.status(400);
     throw new Error('Image and level are mandatory');
   }
-  
-  // Convert the Base64 string back to Buffer if needed
-  const imageBuffer = Buffer.from(image, 'base64');
+
+  // Save the file path
+  const imagePath = path.join('uploads', req.file.filename);
 
   try {
     const newAvatar = await Avatar.create({
-      image: imageBuffer, // Store as Buffer
+      imageUrl: imagePath, // Store the file path
       level
     });
-    
+
     res.status(201).json(newAvatar);
   } catch (err) {
     console.error('Error creating avatar:', err);
@@ -30,8 +31,7 @@ const createAvatar = asyncHandler(async (req, res) => {
   }
 });
 
-
-// @desc Create an avatar
+// @desc Create an avatar from a file path
 // @route POST /api/avatars/path
 // @access Private
 const createAvatarFromPath = asyncHandler(async (req, res) => {
@@ -39,20 +39,23 @@ const createAvatarFromPath = asyncHandler(async (req, res) => {
 
   if (!imagePath || level === undefined) {
     res.status(400);
-    throw new Error('Image and level are mandatory');
+    throw new Error('Image path and level are mandatory');
   }
 
   try {
-    const imageBuffer = fs.readFileSync(imagePath);
+    if (!fs.existsSync(imagePath)) {
+      throw new Error('Image file does not exist');
+    }
+
     const newAvatar = await Avatar.create({
-      image: imageBuffer,
+      imageUrl: imagePath,
       level
     });
-    console.log("Success")
+
     res.status(201).json(newAvatar);
   } catch (err) {
-    console.error('Error reading the image file:', err);
-    res.status(500).json({ message: 'Error reading the image file' });
+    console.error('Error creating avatar:', err);
+    res.status(500).json({ message: 'Error creating avatar' });
   }
 });
 
@@ -62,82 +65,97 @@ const createAvatarFromPath = asyncHandler(async (req, res) => {
 const getUserAvatar = asyncHandler(async (req, res) => {
   const level = req.user.level;
 
-  const avatar = await Avatar.findOne({ where: { level } });
+  try {
+    const avatar = await Avatar.findOne({ where: { level } });
 
-  if (avatar) {
-    const base64Image = avatar.image.toString('base64');
-    res.json({ image: base64Image });
-  } else {
-    res.status(404);
-    throw new Error('Avatar not found');
+    if (!avatar) {
+      res.status(404);
+      throw new Error('Avatar not found');
+    }
+
+    res.json({ imageUrl: avatar.imageUrl });
+  } catch (err) {
+    console.error('Error fetching avatar:', err);
+    res.status(500).json({ message: 'Error fetching avatar' });
   }
 });
 
-// @desc Get all avatar
+// @desc Get all avatars
 // @route GET /api/avatars/all
 // @access Private
-const getAllAvatar = asyncHandler(async (req, res) => {
+const getAllAvatars = asyncHandler(async (req, res) => {
   try {
     const avatars = await Avatar.findAll();
 
-    if (avatars && avatars.length > 0) {
-      const avatarsWithBase64Images = avatars.map(avatar => {
-        return {
-          ...avatar.dataValues, // Spread the existing avatar properties
-          image: avatar.image.toString('base64') // Convert image to Base64
-        };
-      })
-      ;
-      
-      res.json({ data: avatarsWithBase64Images });
-    } else {
+    if (!avatars || avatars.length === 0) {
       res.status(404).json({ message: 'No avatars found' });
+      return;
     }
 
-    console.log("Fetched all avatars with Base64 images");
+    res.json({ data: avatars });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching avatars', error: error.message });
-    console.error("Error fetching avatars:", error);
+    console.error('Error fetching avatars:', error);
   }
 });
 
 // @desc Update user's avatar
-// @route PUT /api/avatars
+// @route PUT /api/avatars/:id
 // @access Private
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  const id = req.params;
-  const { image, level } = req.body;
+  const { id } = req.params;
+  const { level } = req.body;
 
-  const avatar = await Avatar.findOne({ where: { id } });
+  try {
+    const avatar = await Avatar.findOne({ where: { id } });
 
-  if (avatar) {
-    avatar.image = image || avatar.image;
-    avatar.level = level || avatar.level;
+    if (!avatar) {
+      res.status(404);
+      throw new Error('Avatar not found');
+    }
+
+    if (req.file) {
+      // Update image path if a new file is uploaded
+      avatar.imageUrl = path.join('uploads', req.file.filename);
+    }
+
+    avatar.level = level !== undefined ? level : avatar.level;
 
     await avatar.save();
     res.json(avatar);
-  } else {
-    res.status(404);
-    throw new Error('Avatar not found');
+  } catch (err) {
+    console.error('Error updating avatar:', err);
+    res.status(500).json({ message: 'Error updating avatar' });
   }
 });
 
-// @desc DELETE AVATAR
-// @route DELETE /api/avatars
+// @desc Delete an avatar
+// @route DELETE /api/avatars/:id
 // @access Private
 const deleteAvatar = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const avatar = await Avatar.findOne({ where: { id } });
 
-  if (avatar) {
+  try {
+    const avatar = await Avatar.findOne({ where: { id } });
 
+    if (!avatar) {
+      res.status(404);
+      throw new Error('Avatar not found');
+    }
+
+    const imagePath = avatar.imageUrl;
 
     await avatar.destroy();
-    console.log("Avatar Deleted")
-    res.json(avatar);
-  } else {
-    res.status(404);
-    throw new Error('Avatar not found');
+
+    // Optionally, remove the file from the filesystem
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    res.json({ message: 'Avatar deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting avatar:', err);
+    res.status(500).json({ message: 'Error deleting avatar' });
   }
 });
 
@@ -146,6 +164,6 @@ module.exports = {
   createAvatarFromPath,
   getUserAvatar,
   updateUserAvatar,
-  getAllAvatar,
+  getAllAvatars,
   deleteAvatar
 };

@@ -24,6 +24,7 @@ const GameListModel = sequelize.define('GameListModel', {
     allowNull: true
   },
 }, {
+  tableName: 'gamelistmodels',
   timestamps: false
 });
 

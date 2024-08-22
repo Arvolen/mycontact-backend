@@ -13,7 +13,7 @@ const { validateRegisterInput, validateLoginInput } = require("../utils/validati
 const registerUser = asyncHandler(async (req, res) => {
     validateRegisterInput(req.body);
 
-    const { name, username, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
     const userAvailable = await User.findOne({ where: { email } });
 
     if (userAvailable) {
@@ -23,7 +23,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const hashedPassword = await hashPassword(password);
     const user = await User.create({
-        name,
+        firstName, 
+        lastName,
         username,
         email,
         password: hashedPassword,
@@ -63,7 +64,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { email, password } = req.body;
 
-
     if (!email || !password) {
         res.status(400);
         throw new Error("All fields are mandatory");
@@ -72,23 +72,26 @@ const loginUser = asyncHandler(async (req, res) => {
     // Mock user data
     const mockUser = {
         id: 1,
-        name: "abcd",
+        firstName: "John",
+        lastName: "Doe",
         username: 'abcd1234',
         email: 'aa@qq.com',
-        password: await hashPassword('11111', 10),
+        password: await hashPassword('11111', 10), // Ensure this matches the mock password for comparison
         role: 'member',
         level: 3,
     };
 
     if (email === mockUser.email && await comparePasswords(password, mockUser.password)) {
-
         const accessToken = jwt.sign(
             {
                 user: {
+                    firstName: mockUser.firstName,
+                    lastName: mockUser.lastName,
                     username: mockUser.username,
                     email: mockUser.email,
                     id: mockUser.id,
-                    role: 'member'
+                    role: mockUser.role,
+                    level: mockUser.level
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -102,9 +105,8 @@ const loginUser = asyncHandler(async (req, res) => {
         res.status(401);
         throw new Error("Email or password not valid");
     }
-
-
 });
+
 
 
 //@desc Current user info
@@ -114,9 +116,11 @@ const currentUser = asyncHandler(async (req, res) => {
 
     const mockUser = {
         id: 1,
+        firstName: "John",
+        lastName: "Doe",
         username: 'abcd1234',
         email: 'aa@qq.com',
-        role: 'admin',
+        role: 'member',
         level: 3,
     };
 
@@ -125,10 +129,21 @@ const currentUser = asyncHandler(async (req, res) => {
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
 
-    res.json(mockUser);
-    console.log("Current user");
-
+    res.json({
+        user: {
+            firstName: mockUser.firstName,
+            lastName: mockUser.lastName,
+            username: mockUser.username,
+            email: mockUser.email,
+            id: mockUser.id,
+            role: mockUser.role,
+            level: mockUser.level
+        }
+    });
+    
+    console.log("Current user", mockUser);
 });
+
 
 //@desc Update user level
 //@route PATCH /api/users/level
@@ -159,23 +174,22 @@ const updateUserLevel = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     console.log("Updating");
     const userId = req.user.id;
-    const { name, username, country, contact, accountStatus, email } = req.body;
+    const { firstName, lastName, username, country, contact, accountStatus, email } = req.body;
 
-
-    if (!name && !username && !country && !contact && !accountStatus && !email) {
+    if (!firstName && !lastName && !username && !country && !contact && !accountStatus && !email) {
         res.status(400);
         throw new Error('No valid fields provided for update');
     }
 
     const user = await User.findByPk(userId);
-
+    
     if (!user) {
         res.status(404);
         throw new Error('User not found');
     }
-
-
-    if (name) user.name = name;
+    console.log("Here");
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
     if (username) user.username = username;
     if (country) user.country = country;
     if (contact) user.contact = contact;

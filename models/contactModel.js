@@ -1,7 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/dbConnection'); // Adjust the path as necessary
-const User = require('./userModel');
-
+const { sequelize } = require('../config/dbConnection'); 
 
 const Contact = sequelize.define('Contact', {
     id: {
@@ -24,7 +22,7 @@ const Contact = sequelize.define('Contact', {
     user_id: {
         type: DataTypes.INTEGER,
         references: {
-            model: User,
+            model: 'users',
             key: 'id'
           }
     },
@@ -37,7 +35,10 @@ const Contact = sequelize.define('Contact', {
         defaultValue: DataTypes.NOW
     }
 }, {
+    tableName: 'contacts',
     timestamps: false
 });
+
+
 
 module.exports = Contact;
