@@ -7,10 +7,11 @@ const errorHandler = require("./middleware/errorHandler");
 const { connectDb, sequelize } = require("./config/dbConnection");
 require("dotenv").config();
 const cors = require("cors");
-const multer = require("multer");
 const path = require("path");
 const rateLimitingMiddleware = require('./middleware/rateLimitingMiddleware')
 const bodyParser = require('body-parser');
+
+
 const app = express();
 const port = process.env.PORT || 5001;
 
@@ -47,12 +48,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(bodyParser.json()); // Parse JSON bodies
 app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(rateLimitingMiddleware)
+
+
 
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-app.use(rateLimitingMiddleware)
-
 
 app.use('/api/contacts', require("./routes/contactRoutes"));
 app.use('/api/users', require("./routes/userRoutes"));

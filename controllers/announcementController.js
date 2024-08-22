@@ -1,14 +1,14 @@
 // controllers/announcementController.js
 const asyncHandler = require('express-async-handler');
-const Announcement = require('../models/announcementModel');
+const {Announcements, UserAnnouncementInteraction} = require('../models/announcementModel');
 const User = require('../models/userModel');
-const UserAnnouncementInteraction = require('../models/anounceAction');
+
 
 // @desc Get all active announcements
 // @route GET /api/announcements
 // @access Public
 const getAnnouncements = asyncHandler(async (req, res) => {
-  const announcements = await Announcement.findAll({ where: { active: true } });
+  const announcements = await Announcements.findAll({ where: { active: true } });
   res.json(announcements);
 });
 
@@ -36,7 +36,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
   const { content, title, subtitle, rewards } = req.body;
   console.log("Creating a new announcment")
   // Create the new announcement
-  const announcement = await Announcement.create({ content, title, subtitle, rewards });
+  const announcement = await Announcements.create({ content, title, subtitle, rewards });
 
   // Fetch all users
   const users = await User.findAll();
@@ -62,7 +62,7 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
   
   const { id } = req.params;
   const { content,  title,  subtitle, rewards } = req.body;
-  const announcement = await Announcement.findByPk(id);
+  const announcement = await Announcements.findByPk(id);
 
 console.log("Updating data!")
 
@@ -88,7 +88,7 @@ const deleteAnnouncement = asyncHandler(async (req, res) => {
   console.log("Trying to delete announcement with ID:", id);
 
   // Find the announcement
-  const announcement = await Announcement.findByPk(id);
+  const announcement = await Announcements.findByPk(id);
   console.log("Found announcement:", announcement);
 
   if (!announcement) {

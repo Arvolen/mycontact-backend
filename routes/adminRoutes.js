@@ -1,7 +1,13 @@
 // routes/adminRoutes.js
 const express = require('express');
 const router = express.Router();
-const { adminRegister, adminLogin, currentAdminStatus, getAllUsers, getUser } = require("../controllers/adminController");
+const { 
+    adminRegister, 
+    adminLogin, 
+    currentAdminStatus, 
+    getAllUsers, 
+    getUser 
+} = require("../controllers/adminController");
 const validateToken = require("../middleware/validateToken");
 const isAdminHandler = require("../middleware/isAdminHandler");
 

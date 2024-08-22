@@ -8,7 +8,6 @@ const isAdminHandler = asyncHandler(async (req, res, next) => {
     
     const user = req.user;
 
-    console.log("This is the user:", user)
 
     if (!user) {
         res.status(404).json({

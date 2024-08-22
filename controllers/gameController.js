@@ -1,7 +1,6 @@
 const asyncHandler = require('express-async-handler');
-const GameModel = require('../models/gameModel');
-const GameListModel = require('../models/gameListModel');
-const GameTransactionModel = require('../models/gameTransactionModel');
+const {GameModel, GameListModel, GameTransactionModel} = require('../models/gameModel');
+
 
 // @desc Create a new game
 // @route POST /api/games/start
@@ -47,18 +46,7 @@ const endGame = asyncHandler(async (req, res) => {
   res.status(200).json(game);
 });
 
-// @desc Log a game transaction
-// @route POST /api/games/transaction
-// @access Private
-const logTransaction = asyncHandler(async (req, res) => {
-  const { game_id, event_type, details } = req.body;
-  console.log("Logging transaction for game", game_id);
 
-  const transaction = await GameTransactionModel.create({ game_id, event_type, details });
-  console.log("Transaction logged:", transaction);
-
-  res.status(201).json(transaction);
-});
 
 // @desc Get all games (Admin only)
 // @route GET /api/games
@@ -72,42 +60,10 @@ const getAllGames = asyncHandler(async (req, res) => {
   res.status(200).json(games);
 });
 
-// @desc Get game details by ID (Admin only)
-// @route GET /api/games/:id
-// @access Private (Admin)
-const getGameDetails = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  console.log("Fetching details for game ID:", id);
-
-  const game = await GameModel.findByPk(id);
-  if (!game) {
-    res.status(404);
-    throw new Error('Game not found');
-  }
-
-  console.log("Game details fetched:", game);
-  res.status(200).json(game);
-});
-
-// @desc Get all games for the logged-in user
-// @route GET /api/games/user
-// @access Private
-const getUserGames = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  console.log("Fetching games for user ID:", userId);
-
-  const games = await GameModel.findAll({ where: { user_id: userId } });
-  console.log("Games fetched for user:", games);
-
-  res.status(200).json(games);
-});
 
 
 module.exports = {
   createGame,
   endGame,
-  logTransaction,
-  getAllGames,
-  getGameDetails,
-  getUserGames
+  getAllGames
 };
